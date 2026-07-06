@@ -18,6 +18,64 @@
         </div>
     </div>
     <div class="content-container">
+        <div class="insight-card alerts-card-compact" id="dashboardAlertsCard">
+            <div class="alerts-header-row">
+                <div class="card-title" style="font-size:14px;">
+                    <i data-lucide="sparkles" class="sub-icon" style="color: var(--corporate-blue);"></i>
+                    AI Executive Brief
+                    <span class="info-dot" data-tooltip="AI-generated summary of critical events and alerts across all departments. Updated in real-time as new data comes in from connected systems.">i</span>
+                </div>
+                <a href="{{ route('ai-insights') }}" class="view-ai-btn">
+                    <i data-lucide="arrow-right" class="view-ai-icon"></i>
+                    View in AI Insights
+                </a>
+            </div>
+            <p style="font-size:11px; color: var(--slate-500); margin-bottom: 0.75rem;">Here's what you need to know today</p>
+            
+            {{-- Brief alerts in a grid --}}
+            <div class="brief-alerts-grid">
+                <div class="brief-alert-card brief-alert-critical">
+                    <div class="brief-alert-card-icon">
+                        <i data-lucide="alert-triangle" class="brief-alert-icon"></i>
+                    </div>
+                    <strong>GPU Stock Critical</strong>
+                    <p>RTX 4060 down to 32 units — expedite PO #4521</p>
+                    <span class="alert-mini-time">5m ago</span>
+                </div>
+                <div class="brief-alert-card brief-alert-warning">
+                    <div class="brief-alert-card-icon">
+                        <i data-lucide="alert-circle" class="brief-alert-icon"></i>
+                    </div>
+                    <strong>Delivery Rate Drop</strong>
+                    <p>On-time fell 3.2% to 91.3% — Metro Manila</p>
+                    <span class="alert-mini-time">18m ago</span>
+                </div>
+                <div class="brief-alert-card brief-alert-danger">
+                    <div class="brief-alert-card-icon">
+                        <i data-lucide="truck" class="brief-alert-icon"></i>
+                    </div>
+                    <strong>Fleet Delay</strong>
+                    <p>Flash Express #FE-224 — 2hr delay, 34 orders</p>
+                    <span class="alert-mini-time">45m ago</span>
+                </div>
+                <div class="brief-alert-card brief-alert-info">
+                    <div class="brief-alert-card-icon">
+                        <i data-lucide="user-plus" class="brief-alert-icon"></i>
+                    </div>
+                    <strong>New User Added</strong>
+                    <p>Maria Santos — Finance department</p>
+                    <span class="alert-mini-time">3h ago</span>
+                </div>
+                <div class="brief-alert-card brief-alert-success">
+                    <div class="brief-alert-card-icon">
+                        <i data-lucide="check-circle" class="brief-alert-icon"></i>
+                    </div>
+                    <strong>System Updated</strong>
+                    <p>NEXORA BI v1.0.0 — zero downtime</p>
+                    <span class="alert-mini-time">2d ago</span>
+                </div>
+            </div>
+        </div>
         <section class="kpi-grid">
             <div class="kpi-card">
                 <div class="kpi-icon-container"><i data-lucide="dollar-sign" class="kpi-icon"></i></div>
