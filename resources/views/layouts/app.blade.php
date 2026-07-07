@@ -30,7 +30,7 @@
                     </div>
                     <div class="notification-list">
                         <div class="notification-item unread" data-notif="1">
-                            <div class="notification-dot"></div>
+                            <div class="notification-dot"></div>    
                             <div class="notification-icon bg-icon-red">
                                 <i data-lucide="alert-triangle" class="notif-icon-sm"></i>
                             </div>
@@ -106,6 +106,13 @@
                         AI Insights
                     </div>
                     <div class="nav-item-sub">Recommendations</div>
+                </a>
+                <a href="{{ route('department-analytics') }}" class="nav-item {{ request()->routeIs('department-analytics') ? 'active' : '' }}" data-tooltip="Department Analytics">
+                    <div class="nav-item-title">
+                        <i data-lucide="building-2" class="nav-icon"></i>
+                        Department Analytics
+                    </div>
+                    <div class="nav-item-sub">KPI Deep Dive</div>
                 </a>
             </div>
             <div class="sidebar-footer">

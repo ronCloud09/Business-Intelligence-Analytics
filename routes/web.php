@@ -25,5 +25,10 @@ Route::get('/ai-insights', function () {
     return view('ai-insights');
 })->name('ai-insights');
 
+// Department Health
+Route::get('/department-analytics', function () {
+    return view('department-analytics');
+})->name('department-analytics');
+
 // Login processing
 Route::post('/login', [\App\Http\Controllers\Auth\LoginController::class, 'login'])->name('login');
