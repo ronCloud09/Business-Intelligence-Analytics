@@ -78,7 +78,7 @@ class SalesService
             ->orderByDesc('units_sold')
             ->limit($limit)
             ->get()
-            ->map(fn ($row) => [
+            ->map(fn($row) => [
                 'product_name' => $row->product_name,
                 'units_sold' => (int) $row->units_sold,
                 'revenue' => (float) $row->revenue,
@@ -98,7 +98,7 @@ class SalesService
             ->groupBy('order_date')
             ->orderBy('order_date')
             ->get()
-            ->keyBy(fn ($row) => Carbon::parse($row->order_date)->toDateString());
+            ->keyBy(fn($row) => Carbon::parse($row->order_date)->toDateString());
 
         $trend = [];
         for ($i = 0; $i < $days; $i++) {

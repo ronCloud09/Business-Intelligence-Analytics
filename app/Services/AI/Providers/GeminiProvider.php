@@ -29,7 +29,7 @@ class GeminiProvider implements AIProviderInterface
                 throw new RuntimeException('GEMINI_API_KEY is not set. Add it to your .env file.');
             }
 
-            $url = "{$this->baseUrl}/models/{$this->model}:generateContent?key={$this->apiKey}";
+            $url = "{$this->baseUrl}/models/{$this->model}:generateContent";
 
             $generationConfig = [
                 'temperature' => 0.4,
@@ -40,9 +40,12 @@ class GeminiProvider implements AIProviderInterface
             }
 
             $response = Http::retry(3, 500)
-                ->timeout($this->timeout)
-                ->acceptJson()
-                ->post($url, [
+    ->timeout($this->timeout)
+    ->acceptJson()
+    ->withHeaders([
+        'x-goog-api-key' => $this->apiKey,
+    ])
+    ->post($url, [
                     'system_instruction' => [
                         'parts' => [
                             ['text' => $systemPrompt],

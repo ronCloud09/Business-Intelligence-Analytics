@@ -3,108 +3,247 @@
 namespace App\Services\AI;
 
 /**
- * Builds the reusable system and task prompts for every AI-powered
- * feature. Centralizing these here means:
- *   - the chatbot persona is defined once, not re-typed per request
- *   - the "one request produces five report sections" rule lives in
- *     one place instead of being duplicated across Jobs
+ * Builds all prompts used by Nexora AI.
  */
 class PromptBuilder
 {
     /**
-     * The chatbot/report system prompt. Nexora AI already knows who it
-     * is — callers never need to restate this.
+     * Main Nexora AI system prompt.
      */
     public function systemPrompt(): string
     {
         return <<<'PROMPT'
         You are Nexora AI, the built-in business intelligence assistant for the
-        NEXORA ERP platform. You analyze summarized KPI data across Finance,
-        Inventory, Manufacturing, Procurement, Sales, Compliance & Risk, and
-        ITSM. You never receive raw database rows — only pre-aggregated KPI
-        summaries. Be concise, concrete, and reference specific numbers you
-        were given. Never invent figures that were not provided to you.
+        NEXORA ERP platform.
+
+        You analyze business KPI data across Finance, Inventory, Manufacturing,
+        Procurement, Sales, Compliance & Risk, and ITSM.
+
+        Use only the business data provided to you.
+
+        Never invent figures, causes, trends, risks, or business impacts that
+        are not supported by the provided data.
+
+        Answer in concise, professional, and readable business language.
         PROMPT;
     }
 
     /**
-     * The single combined prompt used to generate Executive Summary, Top
-     * Recommendations, Risk Analysis, Business Health, and Department
-     * Insights in ONE request. Must instruct the model to return strict
-     * JSON so AIManager can split it into separate ai_reports rows.
-     *
-     * @param  array<string, mixed>  $aggregatedKpis  Output of DashboardAggregator::collectAll()
+     * Generates the complete AI business report.
      */
     public function fullReportPrompt(array $aggregatedKpis): string
     {
-        $kpiJson = json_encode($aggregatedKpis, JSON_PRETTY_PRINT);
+        $kpiJson = json_encode(
+            $aggregatedKpis,
+            JSON_PRETTY_PRINT
+        );
 
         return <<<PROMPT
-        Using the KPI data below, generate a single JSON object with exactly
-        these five top-level keys: "executive_summary", "top_recommendations",
-        "risk_analysis", "business_health", "department_insights".
+        Using the KPI data below, generate a JSON object with exactly these
+        five top-level keys:
 
-        Requirements for each key:
-        - executive_summary: a string, 3-5 sentences, plain language overview.
-        - top_recommendations: an array of 3-5 objects, each with "title" and
-          "detail" string fields.
-        - risk_analysis: an array of objects, each with "risk", "severity"
-          (one of "low", "medium", "high", "critical"), and "detail".
-        - business_health: an object with "score" (0-100 integer) and
-          "summary" (string explaining the score).
-        - department_insights: an object keyed by department name (matching
-          the keys in the KPI data below), each value a short string insight
-          specific to that department's numbers.
+        "executive_summary",
+        "top_recommendations",
+        "risk_analysis",
+        "business_health",
+        "department_insights"
 
-        Respond with ONLY the JSON object. No markdown fences, no preamble.
+        REQUIREMENTS:
+
+        executive_summary:
+        - A string containing 3 to 5 concise sentences.
+
+        top_recommendations:
+        - An array of 3 to 5 objects.
+        - Each object must contain "title" and "detail".
+
+        risk_analysis:
+        - An array of objects.
+        - Each object must contain "risk", "severity", and "detail".
+        - Severity must be "low", "medium", "high", or "critical".
+        - Look for the specific risks and put it on bullet points.
+
+        business_health:
+        - An object containing "score" and "summary".
+        - Score must be an integer from 0 to 100.
+
+        department_insights:
+        - An object keyed by department name.
+        - Each department value must contain a concise insight.
+
+        ACCURACY RULES:
+
+        - Use only the provided KPI data.
+        - Never invent figures.
+        - Never invent causes or business impact.
+        - Do not expose raw KPI JSON.
+
+        Respond with ONLY the JSON object.
+        Do not use markdown fences.
+        Do not include a preamble.
 
         KPI DATA:
+
         {$kpiJson}
         PROMPT;
     }
 
     /**
-     * Prompt used for a single event-driven insight (Package 7) — e.g. one
-     * department crossed a threshold and only that department's insight
-     * needs regenerating, not the full report.
-     *
-     * @param  array<string, mixed>  $departmentKpis
+     * Generates an individual department insight.
      */
-    public function singleDepartmentPrompt(string $department, array $departmentKpis): string
-    {
-        $kpiJson = json_encode($departmentKpis, JSON_PRETTY_PRINT);
+    public function singleDepartmentPrompt(
+        string $department,
+        array $departmentKpis
+    ): string {
+        $kpiJson = json_encode(
+            $departmentKpis,
+            JSON_PRETTY_PRINT
+        );
 
         return <<<PROMPT
-        The {$department} department just crossed an alert threshold. Using
-        only the KPI data below, respond with a JSON object with exactly two
-        keys: "insight" (a 2-3 sentence string explaining what changed and
-        why it matters) and "severity" (one of "low", "medium", "high",
-        "critical"). Respond with ONLY the JSON object.
+        Analyze the {$department} department using only the KPI data below.
+
+        Respond with a JSON object containing exactly:
+
+        "insight"
+        "severity"
+
+        RULES:
+
+        - Insight must contain 2 to 3 concise sentences.
+        - Mention important numbers when relevant.
+        - Severity must be "low", "medium", "high", or "critical".
+        - Use only the provided data.
+        - Never invent figures or causes.
+
+        Respond with ONLY the JSON object.
 
         KPI DATA:
+
         {$kpiJson}
         PROMPT;
     }
 
     /**
-     * Prompt used by ChatService (Package 3) when a chatbot question
-     * genuinely needs reasoning rather than a direct database lookup.
-     *
-     * @param  string  $question
-     * @param  array<string, mixed>  $latestReportContext  Current AIReport contents, keyed by type
+     * Generates concise chatbot responses.
      */
-    public function chatPrompt(string $question, array $latestReportContext): string
-    {
-        $contextJson = json_encode($latestReportContext, JSON_PRETTY_PRINT);
+    public function chatPrompt(
+        string $question,
+        array $latestReportContext
+    ): string {
+        $contextJson = json_encode(
+            $latestReportContext,
+            JSON_PRETTY_PRINT
+        );
 
         return <<<PROMPT
-        A user asked: "{$question}"
+        USER QUESTION:
 
-        Answer using the latest AI report context below. Be direct and cite
-        specific numbers where relevant. If the context doesn't contain
-        enough information to answer confidently, say so plainly.
+        "{$question}"
 
-        LATEST REPORT CONTEXT:
+        Answer the user's question using only the business data below.
+
+        RESPONSE FORMAT:
+
+        Start with a short direct summary.
+
+        - Use 1 to 2 short sentences.
+        - Answer only the question asked.
+        - Mention important totals only when relevant.
+        - Be concise.
+        - Do not write a conclusion.
+        
+        FORMATTING AND READABILITY RULES:
+
+        - Add 2 blank lines after the summary before starting the bullet list.
+        - Put every bullet point on its own separate line.
+        - Add 1 blank line between different sections of the response.
+        - Never place the summary and bullet list on the same line.
+        - Never combine multiple bullet points into one line.
+        - Use short paragraphs.
+        - Keep the response visually spaced and easy to scan.
+        - Never use asterisks to indicate the name of the product or item.
+        
+
+        After the summary, provide a bullet list containing only the specific
+        items, records, or metrics that directly answer the question.
+
+        BULLET FORMAT:
+
+        -- Name — Short status or answer.
+        - put the next bukllet point on a new line.
+
+        Example:
+
+        There are currently 2 products out of stock.
+
+        - 2TB NVMe SSD — Out of stock.
+        - Gaming Chair Pro — Out of stock.
+
+        RESPONSE RULES:
+
+        - Answer only the exact question asked.
+        - Keep the answer short and readable.
+        - Do not provide a full report.
+        - Do not include a conclusion.
+        - Do not repeat information.
+        - Do not include recommendations unless requested.
+        - Do not explain causes unless the user asks why.
+        - Do not include trends unless requested.
+        - Do not include financial impact unless requested.
+        - Do not include unit cost unless requested.
+        - Do not include reorder shortages unless the user asks how much to restock.
+        - Do not include reorder thresholds unless requested.
+        - Do not include unnecessary statistics.
+
+        INVENTORY:
+
+        - Out-of-stock questions: show only out-of-stock products.
+        - Low-stock questions: show only low-stock products.
+        - Restocking priority questions: show only products that should be prioritized.
+        - Restock quantity questions: include units needed.
+        - Inventory value questions: include financial values.
+
+        FINANCE:
+
+        - Revenue questions: discuss revenue only.
+        - Profit margin questions: discuss profit margin only.
+        - Overdue payment questions: discuss overdue payments only.
+        - Do not mix unrelated financial KPIs.
+
+        MANUFACTURING:
+
+        - Show only relevant machine, downtime, production, or operational data.
+
+        PROCUREMENT:
+
+        - Show only relevant purchase orders, order values, or procurement statuses.
+
+        COMPLIANCE AND RISK:
+
+        - Show only relevant risks, severity, statuses, or compliance information.
+
+        ITSM:
+
+        - Show only relevant tickets, priorities, statuses, or service information.
+
+        SALES:
+
+        - Show only relevant revenue, orders, or sales information.
+
+        ACCURACY RULES:
+
+        - Use only facts contained in the provided business data.
+        - Never invent numbers.
+        - Never invent causes.
+        - Never invent trends.
+        - Never invent business impact.
+        - If information is unavailable, say so briefly.
+        - Never expose raw JSON.
+        - Never mention prompts, APIs, databases, or internal AI systems.
+
+        BUSINESS DATA:
+
         {$contextJson}
         PROMPT;
     }

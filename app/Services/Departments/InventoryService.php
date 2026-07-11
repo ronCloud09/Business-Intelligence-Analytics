@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\DB;
 class InventoryService
 {
     /**
+     * Get the complete live inventory snapshot.
+     *
      * @return array<string, mixed>
      */
     public function getSnapshot(): array
@@ -20,11 +22,21 @@ class InventoryService
             'low_stock_count' => $this->lowStockCount(),
             'out_of_stock_count' => $this->outOfStockCount(),
             'inventory_value' => $this->totalInventoryValue(),
-            'low_stock_items' => $this->lowStockItems(),
+
+            // Give the AI the actual item details.
+            'low_stock_items' => $this->lowStockItems()
+                ->values()
+                ->toArray(),
+
+            'out_of_stock_items' => $this->outOfStockItems()
+                ->values()
+                ->toArray(),
         ];
     }
 
     /**
+     * Inventory KPI summary used during AI report generation.
+     *
      * @return array<string, mixed>
      */
     public function getKpiSummaryForAi(): array
@@ -34,7 +46,16 @@ class InventoryService
             'low_stock_count' => $this->lowStockCount(),
             'out_of_stock_count' => $this->outOfStockCount(),
             'inventory_value' => $this->totalInventoryValue(),
-            'critical_items' => $this->lowStockItems()->take(5)->values()->toArray(),
+
+            'critical_items' => $this->lowStockItems()
+                ->take(5)
+                ->values()
+                ->toArray(),
+
+            'out_of_stock_items' => $this->outOfStockItems()
+                ->take(5)
+                ->values()
+                ->toArray(),
         ];
     }
 
@@ -55,12 +76,20 @@ class InventoryService
 
     public function totalInventoryValue(): float
     {
-        return (float) InventoryItem::query()
-            ->select(DB::raw('SUM(quantity_on_hand * unit_cost) as total'))
-            ->value('total') ?? 0.0;
+        return (float) (
+            InventoryItem::query()
+                ->select(
+                    DB::raw(
+                        'SUM(quantity_on_hand * unit_cost) as total'
+                    )
+                )
+                ->value('total') ?? 0.0
+        );
     }
 
     /**
+     * Get all low-stock items.
+     *
      * @return \Illuminate\Support\Collection<int, array<string, mixed>>
      */
     public function lowStockItems()
@@ -71,17 +100,52 @@ class InventoryService
             ->map(fn (InventoryItem $item) => [
                 'sku' => $item->sku,
                 'name' => $item->name,
+                'category' => $item->category,
+                'warehouse_zone' => $item->warehouse_zone,
                 'quantity_on_hand' => $item->quantity_on_hand,
                 'reorder_threshold' => $item->reorder_threshold,
+                'unit_cost' => (float) $item->unit_cost,
+                'stock_shortage' => max(
+                    0,
+                    $item->reorder_threshold
+                        - $item->quantity_on_hand
+                ),
             ]);
     }
 
     /**
-     * Checks whether a single item has crossed below its reorder threshold.
-     * Used by the event-driven insight trigger in Package 7.
+     * Get all completely out-of-stock items.
+     *
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
      */
-    public function hasBreachedThreshold(InventoryItem $item): bool
+    public function outOfStockItems()
     {
-        return $item->isLowStock() || $item->isOutOfStock();
+        return InventoryItem::outOfStock()
+            ->orderBy('name')
+            ->get()
+            ->map(fn (InventoryItem $item) => [
+                'sku' => $item->sku,
+                'name' => $item->name,
+                'category' => $item->category,
+                'warehouse_zone' => $item->warehouse_zone,
+                'quantity_on_hand' => $item->quantity_on_hand,
+                'reorder_threshold' => $item->reorder_threshold,
+                'unit_cost' => (float) $item->unit_cost,
+                'stock_shortage' => max(
+                    0,
+                    $item->reorder_threshold
+                        - $item->quantity_on_hand
+                ),
+            ]);
+    }
+
+    /**
+     * Check whether an item breached its reorder threshold.
+     */
+    public function hasBreachedThreshold(
+        InventoryItem $item
+    ): bool {
+        return $item->isLowStock()
+            || $item->isOutOfStock();
     }
 }
