@@ -249,6 +249,7 @@ function escapeHtml(text) {
 
 }
 
+// Make changes so that the chat doesn't reset after removing the ai chatbox
 async function sendAiMessage(presetMessage) {
 
     const input = document.getElementById('aiChatInput');
