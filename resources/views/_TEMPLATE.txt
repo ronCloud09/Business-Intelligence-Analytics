@@ -1,0 +1,110 @@
+{{-- ============================================================
+    NEW PAGE TEMPLATE
+    Save as: resources/views/your-page-name.blade.php
+============================================================ --}}
+
+@extends('layouts.app')
+
+@section('content')
+<div class="tab-content active-tab" style="display:block;">
+    <div class="subheader-bar">
+        <div class="subheader-title">
+            <h3>Page Title Here</h3>
+            <p>Brief description of what this page shows.</p>
+        </div>
+        <div class="subheader-controls">
+            <div class="control-date-selector">
+                <i data-lucide="calendar" class="control-icon-sm"></i>
+                May 9 - May 15, 2026
+            </div>
+            <button class="control-btn" title="Refresh Data">
+                <i data-lucide="refresh-cw" class="control-icon"></i>
+            </button>
+        </div>
+    </div>
+    <div class="content-container">
+        {{-- Your page content goes here --}}
+    </div>
+</div>
+@endsection
+
+@section('scripts')
+<script>
+    // Page-specific JavaScript goes here
+</script>
+@endsection
+
+
+
+{{-- ============================================================
+    ROUTE
+    Add to: routes/web.php
+============================================================ --}}
+
+Route::get('/your-page', function () {
+    return view('your-page');
+})->name('your-page');
+
+
+
+{{-- ============================================================
+    SIDEBAR LINK
+    Add to: resources/views/layouts/app.blade.php
+    Inside the <div class="nav-menu"> section
+============================================================ --}}
+
+<a href="{{ route('your-page') }}" class="nav-item {{ request()->routeIs('your-page') ? 'active' : '' }}" data-tooltip="Your Page">
+    <div class="nav-item-title">
+        <i data-lucide="icon-name" class="nav-icon"></i>
+        Your Page
+    </div>
+    <div class="nav-item-sub">Short Description</div>
+</a>
+
+
+
+{{-- ============================================================
+    ROUTE WITH DATA (when connecting to departments)
+    Replace the simple route above with this when ready
+============================================================ --}}
+
+Route::get('/your-page', function () {
+    // Pull data from departments
+    $data = [
+        'kpi1' => 'value1',
+        'kpi2' => 'value2',
+    ];
+    return view('your-page', $data);
+})->name('your-page');
+
+{{-- Then in your blade file, use: {{ $kpi1 }} --}}
+
+
+
+{{-- ============================================================
+    AVAILABLE LUCIDE ICONS (for sidebar)
+    Replace "icon-name" above with one of these:
+============================================================ --}}
+
+{{--
+layout-dashboard   - Dashboard
+brain              - AI / Intelligence
+bar-chart-3        - Analytics / Charts
+target             - Goals / Scorecard
+building-2         - Departments
+activity           - Real-time monitor
+trending-up        - Predictive
+file-text          - Reports
+database           - Data catalog
+bell               - Alerts
+plug               - Data sources
+users              - Team / Users
+settings           - Settings
+shield             - Security / Risk
+star               - Favorites / Featured
+clock              - Recent / History
+filter             - Filters / Search
+download           - Export
+calendar           - Calendar / Schedule
+mail               - Messages / Email
+--}}
