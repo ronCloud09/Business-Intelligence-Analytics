@@ -10,11 +10,6 @@ class AIController extends Controller
 {
     public function __construct(protected AIManager $aiManager) {}
 
-    /**
-     * Return the current AI generation and its report sections as JSON.
-     * Used for testing Packages 1-2 before the dashboard/chatbot views
-     * are wired up in Package 5.
-     */
     public function current(): JsonResponse
     {
         $generation = AIGeneration::with('reports')
@@ -33,10 +28,7 @@ class AIController extends Controller
         ]);
     }
 
-    /**
-     * Manually trigger a full report generation. This is the same action
-     * the "Manual Refresh" button (Package 6) will call.
-     */
+    /* manual refresh of the ai report*/
     public function refresh(): JsonResponse
     {
         try {
