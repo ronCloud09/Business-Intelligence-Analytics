@@ -27,12 +27,6 @@ class ChatService
         protected SalesService $salesService,
     ) {
     }
-<<<<<<< HEAD
-    // Next peroblem is questions that need reasoning. Those cannot be ansered by a simple database lookup. 
-    // All of the departments except for the onventory need a rule change to prevent ai from having a timeout.
-=======
-
->>>>>>> devtest
     /**
      * @return array{message: string, used_ai: bool}
      */
@@ -65,23 +59,6 @@ class ChatService
             ];
         }
 
-<<<<<<< HEAD
-        $answer = $this->askGemini($message);
-
-        $this->storeAssistantReply(
-            $sessionId,
-            $userId,
-            $answer,
-            usedAi: true
-        );
-
-        return [
-            'message' => $answer,
-            'used_ai' => true,
-        ];
-    }
-
-=======
         try {
             $answer = $this->askGemini($message);
 
@@ -117,30 +94,12 @@ class ChatService
             ];
         }
     }
->>>>>>> devtest
     protected function tryDatabaseLookup(string $message): ?string
     {
         $q = Str::lower(trim($message));
 
         /*
         |--------------------------------------------------------------------------
-<<<<<<< HEAD
-        | INVENTORY
-        |--------------------------------------------------------------------------
-        */
-
-        if (
-            Str::contains($q, [
-                'out of stock',
-                'out-of-stock',
-                'stocked out',
-                'no stock',
-            ])
-        ) {
-            $count = $this->inventoryService->outOfStockCount();
-
-            return "There are currently {$count} item(s) out of stock.";
-=======
         | Inventory
         |--------------------------------------------------------------------------
         */
@@ -309,7 +268,6 @@ class ChatService
             return 'There are currently '
                 . $this->itsmService->openTicketsCount()
                 . ' open ITSM ticket(s).';
->>>>>>> devtest
         }
 
         if (

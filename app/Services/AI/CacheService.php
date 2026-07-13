@@ -36,7 +36,7 @@ class CacheService
     public function rememberDepartmentInsight(string $department, \Closure $callback): mixed
     {
         return Cache::remember(
-            self::DEPARTMENT_INSIGHT_KEY_PREFIX.$department,
+            self::DEPARTMENT_INSIGHT_KEY_PREFIX . $department,
             now()->addHours((int) config('ai.cache_ttl_hours', 12)),
             $callback,
         );
@@ -44,6 +44,6 @@ class CacheService
 
     public function forgetDepartmentInsight(string $department): void
     {
-        Cache::forget(self::DEPARTMENT_INSIGHT_KEY_PREFIX.$department);
+        Cache::forget(self::DEPARTMENT_INSIGHT_KEY_PREFIX . $department);
     }
 }

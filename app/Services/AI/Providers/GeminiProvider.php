@@ -53,15 +53,6 @@ class GeminiProvider implements AIProviderInterface
                 $generationConfig['responseMimeType'] = 'application/json';
             }
 
-<<<<<<< HEAD
-            $response = Http::retry(3, 500)
-    ->timeout($this->timeout)
-    ->acceptJson()
-    ->withHeaders([
-        'x-goog-api-key' => $this->apiKey,
-    ])
-    ->post($url, [
-=======
             $response = Http::retry(2, 300, throw: false)
                 ->timeout($this->timeout)
                 ->acceptJson()
@@ -69,7 +60,6 @@ class GeminiProvider implements AIProviderInterface
                     'x-goog-api-key' => $this->apiKey,
                 ])
                 ->post($url, [
->>>>>>> devtest
                     'system_instruction' => [
                         'parts' => [['text' => $systemPrompt]],
                     ],
