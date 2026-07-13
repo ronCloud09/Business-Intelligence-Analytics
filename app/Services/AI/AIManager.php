@@ -30,7 +30,8 @@ class AIManager
         protected AIRouter $router,
         protected PromptBuilder $promptBuilder,
         protected CacheService $cacheService,
-    ) {}
+    ) {
+    }
 
     /**
      * Generate a brand-new full report bundle and make it the current one.
@@ -62,6 +63,7 @@ class AIManager
                 $this->promptBuilder->systemPrompt(),
                 $this->promptBuilder->fullReportPrompt($kpis),
                 jsonMode: true,
+                thinkingLevel: 'medium',
             );
 
             $parsed = $this->parseJsonResponse($response['content']);
@@ -86,7 +88,7 @@ class AIManager
                 'completed_at' => now(),
             ]);
 
-            $this->log($generation, 'error', 'Full report generation failed: '.$e->getMessage());
+            $this->log($generation, 'error', 'Full report generation failed: ' . $e->getMessage());
 
             Log::error('[NexoraAI] AIManager::generateFullReport failed', [
                 'generation_id' => $generation->id,
@@ -129,6 +131,7 @@ class AIManager
                 $this->promptBuilder->systemPrompt(),
                 $this->promptBuilder->singleDepartmentPrompt($department, $kpis),
                 jsonMode: true,
+                thinkingLevel: 'medium',
             );
 
             $parsed = $this->parseJsonResponse($response['content']);
@@ -159,7 +162,7 @@ class AIManager
                 'completed_at' => now(),
             ]);
 
-            $this->log($generation, 'error', "Department insight generation failed for [{$department}]: ".$e->getMessage());
+            $this->log($generation, 'error', "Department insight generation failed for [{$department}]: " . $e->getMessage());
 
             throw $e;
         }
@@ -233,8 +236,8 @@ class AIManager
 
         $decoded = json_decode($clean, true);
 
-        if (json_last_error() !== JSON_ERROR_NONE || ! is_array($decoded)) {
-            throw new \RuntimeException('AI provider returned invalid JSON: '.json_last_error_msg());
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($decoded)) {
+            throw new \RuntimeException('AI provider returned invalid JSON: ' . json_last_error_msg());
         }
 
         return $decoded;
@@ -249,4 +252,3 @@ class AIManager
         ]);
     }
 }
-        

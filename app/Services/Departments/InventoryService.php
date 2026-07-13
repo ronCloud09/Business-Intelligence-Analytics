@@ -97,7 +97,7 @@ class InventoryService
         return InventoryItem::lowStock()
             ->orderBy('quantity_on_hand')
             ->get()
-            ->map(fn (InventoryItem $item) => [
+            ->map(fn(InventoryItem $item) => [
                 'sku' => $item->sku,
                 'name' => $item->name,
                 'category' => $item->category,
@@ -108,7 +108,11 @@ class InventoryService
                 'stock_shortage' => max(
                     0,
                     $item->reorder_threshold
+<<<<<<< HEAD
                         - $item->quantity_on_hand
+=======
+                    - $item->quantity_on_hand
+>>>>>>> devtest
                 ),
             ]);
     }
@@ -123,7 +127,11 @@ class InventoryService
         return InventoryItem::outOfStock()
             ->orderBy('name')
             ->get()
+<<<<<<< HEAD
             ->map(fn (InventoryItem $item) => [
+=======
+            ->map(fn(InventoryItem $item) => [
+>>>>>>> devtest
                 'sku' => $item->sku,
                 'name' => $item->name,
                 'category' => $item->category,
@@ -134,7 +142,11 @@ class InventoryService
                 'stock_shortage' => max(
                     0,
                     $item->reorder_threshold
+<<<<<<< HEAD
                         - $item->quantity_on_hand
+=======
+                    - $item->quantity_on_hand
+>>>>>>> devtest
                 ),
             ]);
     }

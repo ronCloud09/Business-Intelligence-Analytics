@@ -27,9 +27,18 @@ use Illuminate\Support\Carbon;
  * @property string|null $error_message
  */
 #[Fillable([
-    'generation_number', 'status', 'triggered_by', 'trigger_reason',
-    'provider', 'model', 'input_tokens', 'output_tokens', 'is_current',
-    'started_at', 'completed_at', 'error_message',
+    'generation_number',
+    'status',
+    'triggered_by',
+    'trigger_reason',
+    'provider',
+    'model',
+    'input_tokens',
+    'output_tokens',
+    'is_current',
+    'started_at',
+    'completed_at',
+    'error_message',
 ])]
 class AIGeneration extends Model
 {
@@ -55,23 +64,17 @@ class AIGeneration extends Model
      */
     public function reports(): HasMany
     {
-        return $this->hasMany(AIReport::class);
+        return $this->hasMany(AIReport::class, 'ai_generation_id');
     }
 
-    /**
-     * @return HasMany<AISnapshot, $this>
-     */
     public function snapshots(): HasMany
     {
-        return $this->hasMany(AISnapshot::class);
+        return $this->hasMany(AISnapshot::class, 'ai_generation_id');
     }
 
-    /**
-     * @return HasMany<AILog, $this>
-     */
     public function logs(): HasMany
     {
-        return $this->hasMany(AILog::class);
+        return $this->hasMany(AILog::class, 'ai_generation_id');
     }
 
     public function totalTokens(): int

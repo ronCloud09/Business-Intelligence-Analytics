@@ -27,8 +27,12 @@ class ChatService
         protected SalesService $salesService,
     ) {
     }
+<<<<<<< HEAD
     // Next peroblem is questions that need reasoning. Those cannot be ansered by a simple database lookup. 
     // All of the departments except for the onventory need a rule change to prevent ai from having a timeout.
+=======
+
+>>>>>>> devtest
     /**
      * @return array{message: string, used_ai: bool}
      */
@@ -61,6 +65,7 @@ class ChatService
             ];
         }
 
+<<<<<<< HEAD
         $answer = $this->askGemini($message);
 
         $this->storeAssistantReply(
@@ -76,12 +81,50 @@ class ChatService
         ];
     }
 
+=======
+        try {
+            $answer = $this->askGemini($message);
+
+            $this->storeAssistantReply(
+                $sessionId,
+                $userId,
+                $answer,
+                usedAi: true
+            );
+
+            return [
+                'message' => $answer,
+                'used_ai' => true,
+            ];
+        } catch (\Throwable $e) {
+            \Log::error('[NexoraAI] Chat AI request failed', [
+                'error' => $e->getMessage(),
+                'exception' => $e,
+            ]);
+
+            $message = 'Nexora AI is temporarily unavailable. Please try again in a moment.';
+
+            $this->storeAssistantReply(
+                $sessionId,
+                $userId,
+                $message,
+                usedAi: false
+            );
+
+            return [
+                'message' => $message,
+                'used_ai' => false,
+            ];
+        }
+    }
+>>>>>>> devtest
     protected function tryDatabaseLookup(string $message): ?string
     {
         $q = Str::lower(trim($message));
 
         /*
         |--------------------------------------------------------------------------
+<<<<<<< HEAD
         | INVENTORY
         |--------------------------------------------------------------------------
         */
@@ -97,6 +140,176 @@ class ChatService
             $count = $this->inventoryService->outOfStockCount();
 
             return "There are currently {$count} item(s) out of stock.";
+=======
+        | Inventory
+        |--------------------------------------------------------------------------
+        */
+
+        if (Str::contains($q, ['out of stock', 'out-of-stock'])) {
+            $items = $this->inventoryService->outOfStockItems();
+
+            if ($items->isEmpty()) {
+                return 'There are currently no products out of stock.';
+            }
+
+            $answer = 'There are currently ' . $items->count()
+                . " products out of stock.\n\n";
+
+            foreach ($items as $item) {
+                $answer .= '- **' . $item['name'] . "** — Out of stock.\n";
+            }
+
+            return trim($answer);
+        }
+
+        if (Str::contains($q, ['low stock', 'low-stock'])) {
+            $items = $this->inventoryService->lowStockItems();
+
+            if ($items->isEmpty()) {
+                return 'There are currently no low-stock products.';
+            }
+
+            $answer = 'There are currently ' . $items->count()
+                . " products below their reorder threshold.\n\n";
+
+            foreach ($items as $item) {
+                $answer .= '- **' . $item['name'] . "** — Low stock.\n";
+            }
+
+            return trim($answer);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Finance
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            Str::contains($q, 'revenue')
+            && Str::contains($q, 'today')
+        ) {
+            $trend = $this->salesService->revenueTrend(1);
+            $revenue = $trend[0]['total'] ?? 0;
+
+            return 'Today\'s revenue is ₱'
+                . number_format($revenue, 2) . '.';
+        }
+
+        if (Str::contains($q, 'profit margin')) {
+            return 'The current profit margin is '
+                . $this->financeService->profitMarginPercent() . '%.';
+        }
+
+        if (
+            Str::contains($q, 'overdue')
+            && Str::contains($q, ['payment', 'payments', 'invoice', 'invoices'])
+        ) {
+            return 'There are '
+                . $this->financeService->overduePaymentsCount()
+                . ' overdue payment(s) totaling ₱'
+                . number_format(
+                    $this->financeService->overduePaymentsTotal(),
+                    2
+                )
+                . '.';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Manufacturing
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            Str::contains($q, [
+                'machines down',
+                'machine down',
+                'machine status',
+                'downtime',
+            ])
+        ) {
+            return 'There are currently '
+                . $this->manufacturingService->machinesDownCount()
+                . ' machine(s) down, with '
+                . $this->manufacturingService->totalDowntimeMinutesToday()
+                . ' total downtime minutes today.';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Compliance and Risk
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            Str::contains($q, ['high severity', 'high-severity'])
+            && Str::contains($q, ['risk', 'risks'])
+        ) {
+            $count = $this->complianceService->highSeverityRisksCount();
+
+            if ($count === 0) {
+                return 'There are currently no high or critical severity risks.';
+            }
+
+            return 'There are currently ' . $count
+                . ' high or critical severity risk(s).';
+        }
+
+        if (
+            Str::contains($q, [
+                'open risks',
+                'compliance risks',
+                'risk count',
+            ])
+        ) {
+            return 'There are currently '
+                . $this->complianceService->openRisksCount()
+                . ' open compliance risk(s), '
+                . $this->complianceService->highSeverityRisksCount()
+                . ' of which are high or critical severity.';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Procurement
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            Str::contains($q, [
+                'open orders',
+                'open purchase orders',
+                'procurement orders',
+            ])
+        ) {
+            return 'There are currently '
+                . $this->procurementService->openOrdersCount()
+                . ' open procurement order(s) worth ₱'
+                . number_format(
+                    $this->procurementService->openOrdersValue(),
+                    2
+                )
+                . '.';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | ITSM
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            Str::contains($q, [
+                'open tickets',
+                'itsm tickets',
+                'support tickets',
+            ])
+        ) {
+            return 'There are currently '
+                . $this->itsmService->openTicketsCount()
+                . ' open ITSM ticket(s).';
+>>>>>>> devtest
         }
 
         if (

@@ -4,28 +4,7 @@ use App\Services\AI\Providers\GeminiProvider;
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Default AI Provider
-    |--------------------------------------------------------------------------
-    |
-    | Which provider AIRouter resolves. To switch from Gemini to OpenAI,
-    | change AI_PROVIDER in .env to "openai" (once an OpenAIProvider is
-    | registered below) — no other file needs to change.
-    |
-    */
-
     'default' => env('AI_PROVIDER', 'gemini'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Providers
-    |--------------------------------------------------------------------------
-    |
-    | Each provider must implement App\Services\AI\Contracts\AIProviderInterface.
-    | AIRouter resolves the "driver" class out of the container.
-    |
-    */
 
     'providers' => [
 
@@ -37,31 +16,13 @@ return [
             'timeout' => (int) env('GEMINI_TIMEOUT', 60),
         ],
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Report Generation & Cache Report time before refresh
-    |--------------------------------------------------------------------------
-    */
     'generation_interval_hours' => (int) env('AI_GENERATION_INTERVAL_HOURS', 12),
-
     'cache_ttl_hours' => (int) env('AI_CACHE_TTL_HOURS', 12),
-    /*
-    |--------------------------------------------------------------------------
-    | Chatbot
-    |--------------------------------------------------------------------------
-    */
+
     'chatbot' => [
         'name' => 'Nexora AI',
-        // Question patterns that should be answered from the database
-        // directly, with no Gemini call. Extended in Package 3's ChatService.
         'db_lookup_keywords' => ['today', 'current', 'right now', 'how many', 'how much'],
     ],
-    /*
-    |--------------------------------------------------------------------------
-    | Event-Driven Triggers (Package 7)
-    |--------------------------------------------------------------------------
-    */
     'thresholds' => [
         'inventory_low_stock_enabled' => true,
         'manufacturing_downtime_enabled' => true,
