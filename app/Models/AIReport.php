@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable(['ai_generation_id', 'type', 'department', 'content'])]
 class AIReport extends Model
 {
+    protected $table = 'ai_reports';
     /**
      * Get the attributes that should be cast.
      *
@@ -48,6 +49,6 @@ class AIReport extends Model
 
     public function scopeCurrent($query)
     {
-        return $query->whereHas('generation', fn ($q) => $q->where('is_current', true));
+        return $query->whereHas('generation', fn($q) => $q->where('is_current', true));
     }
 }

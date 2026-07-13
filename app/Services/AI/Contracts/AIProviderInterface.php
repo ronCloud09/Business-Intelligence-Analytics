@@ -18,5 +18,11 @@ interface AIProviderInterface
      *
      * @return array{content: string, input_tokens: int, output_tokens: int}
      */
-    public function generate(string $systemPrompt, string $userPrompt, bool $jsonMode = false): array;
+    // app/Services/AI/Contracts/AIProviderInterface.php
+    public function generate(
+        string $systemPrompt,
+        string $userPrompt,
+        bool $jsonMode = false,
+        string $thinkingLevel = 'low'
+    ): array;
 }

@@ -20,7 +20,7 @@ class AIRouter
         $name = config('ai.default');
         $driverClass = config("ai.providers.{$name}.driver");
 
-        if (! $driverClass || ! class_exists($driverClass)) {
+        if (!$driverClass || !class_exists($driverClass)) {
             throw new RuntimeException(
                 "AI provider [{$name}] is not configured. Check config/ai.php and AI_PROVIDER in .env."
             );
@@ -28,9 +28,9 @@ class AIRouter
 
         $provider = app($driverClass);
 
-        if (! $provider instanceof AIProviderInterface) {
+        if (!$provider instanceof AIProviderInterface) {
             throw new RuntimeException(
-                get_class($provider).' must implement '.AIProviderInterface::class
+                get_class($provider) . ' must implement ' . AIProviderInterface::class
             );
         }
 
@@ -44,6 +44,6 @@ class AIRouter
 
     public function modelName(): string
     {
-        return (string) config('ai.providers.'.$this->providerName().'.model');
+        return (string) config('ai.providers.' . $this->providerName() . '.model');
     }
 }
