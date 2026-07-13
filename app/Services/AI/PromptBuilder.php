@@ -7,12 +7,12 @@ namespace App\Services\AI;
  */
 class PromptBuilder
 {
-    /**
-     * Main Nexora system prompt.
-     */
-    public function systemPrompt(): string
-    {
-        return <<<'PROMPT'
+        /**
+         * Main Nexora system prompt.
+         */
+        public function systemPrompt(): string
+        {
+                return <<<'PROMPT'
         You are Nexora, the built-in business assistant for the NEXORA ERP platform.
 
         You help users quickly understand current business information across
@@ -54,19 +54,19 @@ class PromptBuilder
         Never invent figures, causes, trends, risks, or business impacts that are
         not supported by the available business information.
         PROMPT;
-    }
+        }
 
-    /**
-     * Generates the complete AI business report.
-     */
-    public function fullReportPrompt(array $aggregatedKpis): string
-    {
-        $kpiJson = json_encode(
-            $aggregatedKpis,
-            JSON_PRETTY_PRINT
-        );
+        /**
+         * Generates the complete AI business report.
+         */
+        public function fullReportPrompt(array $aggregatedKpis): string
+        {
+                $kpiJson = json_encode(
+                        $aggregatedKpis,
+                        JSON_PRETTY_PRINT
+                );
 
-        return <<<PROMPT
+                return <<<PROMPT
         Generate a structured business report using the KPI information below.
 
         Return a JSON object with exactly these five top-level keys:
@@ -135,21 +135,21 @@ class PromptBuilder
 
         {$kpiJson}
         PROMPT;
-    }
+        }
 
-    /**
-     * Generates an individual department insight.
-     */
-    public function singleDepartmentPrompt(
-        string $department,
-        array $departmentKpis
-    ): string {
-        $kpiJson = json_encode(
-            $departmentKpis,
-            JSON_PRETTY_PRINT
-        );
+        /**
+         * Generates an individual department insight.
+         */
+        public function singleDepartmentPrompt(
+                string $department,
+                array $departmentKpis
+        ): string {
+                $kpiJson = json_encode(
+                        $departmentKpis,
+                        JSON_PRETTY_PRINT
+                );
 
-        return <<<PROMPT
+                return <<<PROMPT
         Review the current {$department} department information below.
 
         Respond with a JSON object containing exactly:
@@ -178,21 +178,21 @@ class PromptBuilder
 
         {$kpiJson}
         PROMPT;
-    }
+        }
 
-    /**
-     * Generates natural and concise chatbot responses.
-     */
-    public function chatPrompt(
-        string $question,
-        array $latestReportContext
-    ): string {
-        $contextJson = json_encode(
-            $latestReportContext,
-            JSON_PRETTY_PRINT
-        );
+        /**
+         * Generates natural and concise chatbot responses.
+         */
+        public function chatPrompt(
+                string $question,
+                array $latestReportContext
+        ): string {
+                $contextJson = json_encode(
+                        $latestReportContext,
+                        JSON_PRETTY_PRINT
+                );
 
-        return <<<PROMPT
+                return <<<PROMPT
         USER QUESTION:
 
         "{$question}"
@@ -452,5 +452,5 @@ class PromptBuilder
 
         {$contextJson}
         PROMPT;
-    }
+        }
 }
