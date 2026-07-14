@@ -61,20 +61,31 @@ class DataService
     }
 
     public static function getForecastBoxes(): array
-{
-    return [
-        ['icon' => 'clock', 'label' => 'Forecast Accuracy', 'value' => '0%', 'change' => '0%', 'change_class' => 'change-up'],
-        ['icon' => 'star', 'label' => 'High Demand Products', 'value' => '0', 'change' => '0', 'change_class' => 'change-up'],
-        ['icon' => 'trending-up', 'label' => 'Revenue Growth', 'value' => '0%', 'change' => '0%', 'change_class' => 'change-up'],
-    ];
-}
+    {
+        return [
+            ['icon' => 'clock', 'label' => 'Forecast Accuracy', 'value' => '0%', 'change' => '0%', 'change_class' => 'change-up'],
+            ['icon' => 'star', 'label' => 'High Demand Products', 'value' => '0', 'change' => '0', 'change_class' => 'change-up'],
+            ['icon' => 'trending-up', 'label' => 'Revenue Growth', 'value' => '0%', 'change' => '0%', 'change_class' => 'change-up'],
+        ];
+    }
 
     // ============================================================
     // TOP 10 PRODUCTS
     // ============================================================
     public static function getTopProducts(): array
     {
-        return [];
+        return [
+            ['name' => 'Gaming PC Alpha', 'units_sold' => 240, 'prev_units' => 210, 'revenue' => 480000, 'coverage' => 15, 'stock_status' => 'Low Stock', 'stock_class' => 'bg-high'],
+            ['name' => 'RTX 4060 GPU', 'units_sold' => 185, 'prev_units' => 200, 'revenue' => 277500, 'coverage' => 22, 'stock_status' => 'Low Stock', 'stock_class' => 'bg-high'],
+            ['name' => 'Gaming Monitor 27"', 'units_sold' => 160, 'prev_units' => 145, 'revenue' => 208000, 'coverage' => 55, 'stock_status' => 'Adequate', 'stock_class' => 'bg-med'],
+            ['name' => 'Mechanical Keyboard', 'units_sold' => 145, 'prev_units' => 130, 'revenue' => 130500, 'coverage' => 78, 'stock_status' => 'In Stock', 'stock_class' => 'bg-low'],
+            ['name' => 'Gaming Mouse Pro', 'units_sold' => 132, 'prev_units' => 140, 'revenue' => 79200, 'coverage' => 85, 'stock_status' => 'In Stock', 'stock_class' => 'bg-low'],
+            ['name' => 'USB-C Headset', 'units_sold' => 118, 'prev_units' => 100, 'revenue' => 94400, 'coverage' => 48, 'stock_status' => 'Adequate', 'stock_class' => 'bg-med'],
+            ['name' => '1TB NVMe SSD', 'units_sold' => 105, 'prev_units' => 95, 'revenue' => 157500, 'coverage' => 90, 'stock_status' => 'In Stock', 'stock_class' => 'bg-low'],
+            ['name' => 'Gaming Chair Pro', 'units_sold' => 92, 'prev_units' => 88, 'revenue' => 276000, 'coverage' => 70, 'stock_status' => 'In Stock', 'stock_class' => 'bg-low'],
+            ['name' => 'Webcam 4K', 'units_sold' => 78, 'prev_units' => 85, 'revenue' => 62400, 'coverage' => 35, 'stock_status' => 'Adequate', 'stock_class' => 'bg-med'],
+            ['name' => 'WiFi 6 Router', 'units_sold' => 65, 'prev_units' => 55, 'revenue' => 97500, 'coverage' => 92, 'stock_status' => 'In Stock', 'stock_class' => 'bg-low'],
+        ];
     }
 
     // ============================================================
@@ -89,18 +100,19 @@ class DataService
         $delayedShipments = 47;
         $returnRate = 2.1;
 
-        // Calculate health percentages
         $overallHealth = round(($completionRate + $qualityRate + $fulfillmentRate) / 3, 1);
         $manufacturingHealth = round(($completionRate + $qualityRate) / 2, 1);
-        $fulfillmentHealth = round($fulfillmentRate, 1);
 
-        // Determine status based on percentages
-        $overallStatus = $overallHealth >= 90 ? 'Healthy' : ($overallHealth >= 75 ? 'Stable' : 'At Risk');
-        $overallClass = $overallHealth >= 90 ? 'health-green' : ($overallHealth >= 75 ? 'health-orange' : 'health-red');
-        $mfgStatus = $manufacturingHealth >= 90 ? 'Good' : ($manufacturingHealth >= 75 ? 'Stable' : 'At Risk');
-        $mfgClass = $manufacturingHealth >= 90 ? 'health-green' : ($manufacturingHealth >= 75 ? 'health-orange' : 'health-red');
-        $flfStatus = $fulfillmentHealth >= 90 ? 'Good' : ($fulfillmentHealth >= 75 ? 'Stable' : 'At Risk');
-        $flfClass = $fulfillmentHealth >= 90 ? 'health-green' : ($fulfillmentHealth >= 75 ? 'health-orange' : 'health-red');
+        $getHealthStatus = function($val) {
+            if ($val >= 80) return ['Healthy', 'health-green'];
+            if ($val >= 60) return ['Stable', 'health-yellow'];
+            if ($val >= 40) return ['Warning', 'health-orange'];
+            return ['Critical', 'health-red'];
+        };
+
+        [$overallStatus, $overallClass] = $getHealthStatus($overallHealth);
+        [$mfgStatus, $mfgClass] = $getHealthStatus($manufacturingHealth);
+        [$flfStatus, $flfClass] = $getHealthStatus($fulfillmentRate);
 
         return [
             'overall' => [
@@ -113,7 +125,7 @@ class DataService
                 'percent' => $manufacturingHealth,
                 'health' => $mfgStatus,
                 'class' => $mfgClass,
-                'detail' => 'Production output is on track. Line B is operating at 86% efficiency.',
+                'detail' => 'Production output is on track.',
                 'metrics' => [
                     ['icon' => 'check-circle', 'label' => 'Completion Rate', 'value' => $completionRate . '%'],
                     ['icon' => 'shield-check', 'label' => 'Quality Pass Rate', 'value' => $qualityRate . '%'],
@@ -121,10 +133,10 @@ class DataService
                 ],
             ],
             'fulfillment' => [
-                'percent' => $fulfillmentHealth,
+                'percent' => $fulfillmentRate,
                 'health' => $flfStatus,
                 'class' => $flfClass,
-                'detail' => 'Fulfillment is stable with minor delays in Metro Manila zone.',
+                'detail' => 'Fulfillment is stable with minor delays.',
                 'metrics' => [
                     ['icon' => 'package-check', 'label' => 'Fulfillment Rate', 'value' => $fulfillmentRate . '%'],
                     ['icon' => 'clock-alert', 'label' => 'Delayed Shipments', 'value' => $delayedShipments],
@@ -136,7 +148,7 @@ class DataService
     }
 
     // ============================================================
-    // SYSTEM ALERTS (Dashboard & AI Insights)
+    // SYSTEM ALERTS
     // ============================================================
     public static function getAlerts(): array
     {
