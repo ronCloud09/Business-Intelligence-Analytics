@@ -15,6 +15,9 @@ use Illuminate\Support\Carbon;
  * @property int $units_produced
  * @property int $units_target
  * @property int $defect_count
+ * @property int $produced
+ * @property int $target
+ * @property int $defects
  */
 #[Fillable(['manufacturing_machine_id', 'log_date', 'units_produced', 'units_target', 'defect_count'])]
 class ManufacturingProductionLog extends Model
