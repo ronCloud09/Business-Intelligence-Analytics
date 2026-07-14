@@ -1,4 +1,4 @@
-name: tests
+obname: tests
 
 on:
   push:

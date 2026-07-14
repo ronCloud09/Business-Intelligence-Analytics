@@ -30,4 +30,8 @@ RUN npm install && npm run build
 
 RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
 
+RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs 
+
+CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT"]
+
 CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=$PORT"]
