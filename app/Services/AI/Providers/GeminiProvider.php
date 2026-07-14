@@ -43,17 +43,14 @@ class GeminiProvider implements AIProviderInterface
             // Gemini 3.x models: do NOT set temperature/top_p/top_k — Google
             // explicitly recommends leaving these at default for this model
             // family. Control speed/depth via thinkingConfig instead.
-            $generationConfig = [
-                'thinkingConfig' => [
-                    'thinkingLevel' => $thinkingLevel,
-                ],
-            ];
+            $generationConfig = [];
 
             if ($jsonMode) {
                 $generationConfig['responseMimeType'] = 'application/json';
             }
 
-            $response = Http::retry(2, 300, throw: false)
+            $response = Http::withoutVerifying()
+                ->retry(2, 300, throw: false)
                 ->timeout($this->timeout)
                 ->acceptJson()
                 ->withHeaders([

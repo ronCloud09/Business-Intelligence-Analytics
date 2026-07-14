@@ -36,15 +36,9 @@ Route::get('/dashboard', function () {
 })->name('dashboard');
 
 // AI Insights
-Route::get('/ai-insights', function () {
-    return view('ai-insights', [
-        'alerts' => DataService::getAlerts(),
-        'executiveSummary' => DataService::getExecutiveSummary(),
-        'recommendations' => DataService::getRecommendations(),
-        'risks' => DataService::getRisks(),
-    ]);
-})->name('ai-insights');
-
+Route::get('/ai-insights', [AIInsightsController::class, 'index'])
+    ->name('ai-insights');
+    
 // Department Analytics
 Route::get('/department-analytics', function () {
     return view('department-analytics', [
