@@ -40,6 +40,10 @@ class ProcurementOrder extends Model
         ];
     }
 
+    /**
+     * @param Builder<self> $query
+     * @return Builder<self>
+     */
     public function scopeOpen(Builder $query): Builder
     {
         return $query->whereNotIn('status', ['received', 'cancelled']);

@@ -46,6 +46,10 @@ class ManufacturingMachine extends Model
         return $this->hasMany(ManufacturingProductionLog::class);
     }
 
+    /**
+     * @param Builder<self> $query
+     * @return Builder<self>
+     */
     public function scopeDown(Builder $query): Builder
     {
         return $query->where('status', 'down');

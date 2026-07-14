@@ -14,6 +14,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $customer_segment
  * @property int $units_sold
  * @property float $revenue
+ * @property float $total
  * @property Carbon $order_date
  * @property bool $is_new_customer
  */

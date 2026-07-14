@@ -3,6 +3,7 @@
 namespace App\Services\Departments;
 
 use App\Models\InventoryItem;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -90,9 +91,9 @@ class InventoryService
     /**
      * Get all low-stock items.
      *
-     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     * @return Collection<int, array<string, mixed>>
      */
-    public function lowStockItems()
+    public function lowStockItems(): Collection
     {
         return InventoryItem::lowStock()
             ->orderBy('quantity_on_hand')
@@ -116,9 +117,9 @@ class InventoryService
     /**
      * Get all completely out-of-stock items.
      *
-     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     * @return Collection<int, array<string, mixed>>
      */
-    public function outOfStockItems()
+    public function outOfStockItems(): Collection
     {
         return InventoryItem::outOfStock()
             ->orderBy('name')
