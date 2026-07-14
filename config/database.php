@@ -49,7 +49,7 @@ return [
             'search_path' => 'public',
             'sslmode' => 'require',
         ],
-        '' => env('', ''),
+
         'sqlite' => [
             'driver' => 'sqlite',
             'url' => env('DB_URL'),
