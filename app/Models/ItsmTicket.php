@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -20,6 +21,7 @@ use Illuminate\Support\Carbon;
 #[Fillable(['ticket_number', 'subject', 'priority', 'status', 'category', 'opened_at', 'resolved_at'])]
 class ItsmTicket extends Model
 {
+    /** @use HasFactory<\Database\Factories\ItsmTicketFactory> */
     use HasFactory;
 
     /**
@@ -35,7 +37,7 @@ class ItsmTicket extends Model
         ];
     }
 
-    public function scopeOpen($query)
+    public function scopeOpen(Builder $query): Builder
     {
         return $query->whereNotIn('status', ['resolved', 'closed']);
     }

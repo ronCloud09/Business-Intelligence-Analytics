@@ -19,6 +19,7 @@ use Illuminate\Support\Carbon;
 #[Fillable(['manufacturing_machine_id', 'log_date', 'units_produced', 'units_target', 'defect_count'])]
 class ManufacturingProductionLog extends Model
 {
+    /** @use HasFactory<\Database\Factories\ManufacturingProductionLogFactory> */
     use HasFactory;
 
     /**
