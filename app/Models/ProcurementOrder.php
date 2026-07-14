@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -21,6 +22,7 @@ use Illuminate\Support\Carbon;
 #[Fillable(['po_number', 'supplier', 'item_description', 'quantity', 'total_cost', 'status', 'expected_date', 'expedited'])]
 class ProcurementOrder extends Model
 {
+    /** @use HasFactory<\Database\Factories\ProcurementOrderFactory> */
     use HasFactory;
 
     /**
@@ -38,7 +40,7 @@ class ProcurementOrder extends Model
         ];
     }
 
-    public function scopeOpen($query)
+    public function scopeOpen(Builder $query): Builder
     {
         return $query->whereNotIn('status', ['received', 'cancelled']);
     }

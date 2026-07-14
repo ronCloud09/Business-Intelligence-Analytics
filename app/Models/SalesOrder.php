@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
 #[Fillable(['order_number', 'product_name', 'customer_segment', 'units_sold', 'revenue', 'order_date', 'is_new_customer'])]
 class SalesOrder extends Model
 {
+    /** @use HasFactory<\Database\Factories\SalesOrderFactory> */
     use HasFactory;
 
     /**

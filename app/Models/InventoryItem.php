@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -19,6 +20,7 @@ use Illuminate\Database\Eloquent\Model;
 #[Fillable(['sku', 'name', 'category', 'warehouse_zone', 'quantity_on_hand', 'reorder_threshold', 'unit_cost'])]
 class InventoryItem extends Model
 {
+    /** @use HasFactory<\Database\Factories\InventoryItemFactory> */
     use HasFactory;
 
     /**
@@ -45,13 +47,13 @@ class InventoryItem extends Model
         return $this->quantity_on_hand <= 0;
     }
 
-    public function scopeLowStock($query)
+    public function scopeLowStock(Builder $query): Builder
     {
         return $query->whereColumn('quantity_on_hand', '<=', 'reorder_threshold')
             ->where('quantity_on_hand', '>', 0);
     }
 
-    public function scopeOutOfStock($query)
+    public function scopeOutOfStock(Builder $query): Builder
     {
         return $query->where('quantity_on_hand', '<=', 0);
     }
