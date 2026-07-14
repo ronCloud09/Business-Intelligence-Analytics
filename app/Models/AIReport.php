@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -22,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class AIReport extends Model
 {
     protected $table = 'ai_reports';
+
     /**
      * Get the attributes that should be cast.
      *
@@ -42,12 +44,20 @@ class AIReport extends Model
         return $this->belongsTo(AIGeneration::class, 'ai_generation_id');
     }
 
-    public function scopeType($query, string $type)
+    /**
+     * @param Builder<self> $query
+     * @return Builder<self>
+     */
+    public function scopeType(Builder $query, string $type): Builder
     {
         return $query->where('type', $type);
     }
 
-    public function scopeCurrent($query)
+    /**
+     * @param Builder<self> $query
+     * @return Builder<self>
+     */
+    public function scopeCurrent(Builder $query): Builder
     {
         return $query->whereHas('generation', fn($q) => $q->where('is_current', true));
     }
