@@ -2,50 +2,30 @@
 
 namespace App\Services\Departments;
 
-use App\Models\FinanceTransaction;
+use App\Models\FinanceDeptInvoice;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Computes Finance & Accounting KPIs from finance_transactions.
- *
- * This is the single source of truth for finance numbers: both the
- * Blade dashboard and the AI Finance Aggregator (Package 2) call into
- * this service instead of querying the database directly.
- */
 class FinanceService
 {
-    /**
-     * Full KPI snapshot for the current period, used by the dashboard
-     * and department analytics views.
-     *
-     * @return array<string, mixed>
-     */
     public function getSnapshot(): array
     {
         return [
             'revenue' => $this->totalRevenue(),
-            'expenses' => $this->totalExpenses(),
+            'expenses' => 0.0, // Finance DB has no expense table
             'profit_margin' => $this->profitMarginPercent(),
             'overdue_payments' => $this->overduePaymentsTotal(),
             'overdue_count' => $this->overduePaymentsCount(),
-            'revenue_by_category' => $this->revenueByCategory(),
+            'revenue_by_category' => $this->revenueByStatus(),
         ];
     }
 
-    /**
-     * A compact KPI array intended for AI summarization (Package 2).
-     * Kept separate from getSnapshot() so the AI-facing shape can evolve
-     * independently of what the dashboard needs to render.
-     *
-     * @return array<string, mixed>
-     */
     public function getKpiSummaryForAi(): array
     {
         return [
             'revenue' => $this->totalRevenue(),
             'profit_margin_percent' => $this->profitMarginPercent(),
-            'expenses' => $this->totalExpenses(),
+            'expenses' => 0.0,
             'overdue_payments_total' => $this->overduePaymentsTotal(),
             'overdue_payments_count' => $this->overduePaymentsCount(),
         ];
@@ -53,75 +33,77 @@ class FinanceService
 
     public function totalRevenue(): float
     {
-        return (float) FinanceTransaction::revenue()->sum('amount');
+        return (float) FinanceDeptInvoice::sum('paid_amount');
     }
 
     public function totalExpenses(): float
     {
-        return (float) FinanceTransaction::expense()->sum('amount');
+        // Finance department currently has invoices only.
+        return 0.0;
     }
 
     public function profitMarginPercent(): float
     {
-        $revenue = $this->totalRevenue();
+        $invoiced = (float) FinanceDeptInvoice::sum('invoice_amount');
 
-        if ($revenue <= 0) {
+        if ($invoiced <= 0) {
             return 0.0;
         }
 
-        return round((($revenue - $this->totalExpenses()) / $revenue) * 100, 2);
+        return round(($this->totalRevenue() / $invoiced) * 100, 2);
     }
 
     public function overduePaymentsTotal(): float
     {
-        return (float) FinanceTransaction::overdue()->sum('amount');
+        return (float) FinanceDeptInvoice::where('status', 'Overdue')
+            ->sum('outstanding_amount');
     }
 
     public function overduePaymentsCount(): int
     {
-        return FinanceTransaction::overdue()->count();
+        return FinanceDeptInvoice::where('status', 'Overdue')->count();
     }
 
-    /**
-     * @return array<int, array{category: string, total: float}>
-     */
-    public function revenueByCategory(): array
+    public function revenueByStatus(): array
     {
-        return FinanceTransaction::revenue()
-            ->select('category', DB::raw('SUM(amount) as total'))
-            ->groupBy('category')
+        return FinanceDeptInvoice::select(
+            'status',
+            DB::raw('SUM(invoice_amount) as total')
+        )
+            ->groupBy('status')
             ->orderByDesc('total')
             ->get()
-            ->map(fn ($row) => [
-                'category' => $row->category,
+            ->map(fn($row) => [
+                'category' => $row->status,
                 'total' => (float) $row->total,
             ])
             ->toArray();
     }
 
-    /**
-     * Revenue trend for the last N days, used by the dashboard chart.
-     *
-     * @return array<int, array{date: string, total: float}>
-     */
     public function revenueTrend(int $days = 7): array
     {
         $start = Carbon::today()->subDays($days - 1);
 
-        $rows = FinanceTransaction::revenue()
-            ->where('transaction_date', '>=', $start)
-            ->select('transaction_date', DB::raw('SUM(amount) as total'))
-            ->groupBy('transaction_date')
-            ->orderBy('transaction_date')
+        $rows = FinanceDeptInvoice::whereDate('issue_date', '>=', $start)
+            ->select(
+                'issue_date',
+                DB::raw('SUM(invoice_amount) as total')
+            )
+            ->groupBy('issue_date')
+            ->orderBy('issue_date')
             ->get()
-            ->keyBy(fn ($row) => Carbon::parse($row->transaction_date)->toDateString());
+            ->keyBy(fn($row) => Carbon::parse($row->issue_date)->toDateString());
 
         $trend = [];
+
         for ($i = 0; $i < $days; $i++) {
             $date = $start->copy()->addDays($i)->toDateString();
+
             $trend[] = [
                 'date' => $date,
-                'total' => isset($rows[$date]) ? (float) $rows[$date]->total : 0.0,
+                'total' => isset($rows[$date])
+                    ? (float) $rows[$date]->total
+                    : 0.0,
             ];
         }
 

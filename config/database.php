@@ -4,7 +4,7 @@ use Illuminate\Support\Str;
 use Pdo\Mysql;
 
 return [
-    'default' => env('DB_CONNECTION', 'sqlite'),
+    'default' => env('DB_CONNECTION', 'pgsql'),
 
     'connections' => [
 
@@ -96,6 +96,57 @@ return [
             'search_path' => 'public',
             'sslmode' => 'require',
         ],
+
+        'inventory_dept' => [
+            'driver' => 'pgsql',
+            'url' => env('INVENTORY_DB_URL'),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'require',
+        ],
+
+        'fulfillment_dept' => [
+            'driver' => 'pgsql',
+            'url' => env('FULFILLMENT_DB_URL'),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'require',
+        ],
+
+        'finance_dept' => [
+            'driver' => 'pgsql',
+            'url' => env('FINANCE_DB_URL'),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'require',
+        ],
+
+        'procurement_dept' => [
+            'driver' => 'pgsql',
+            'url' => env('PROCUREMENT_DB_URL'),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'require',
+        ],
+
+        'ecommerce_dept' => [
+            'driver' => 'pgsql',
+            'url' => env('ECOMMERCE_DB_URL'),
+            'charset' => 'utf8',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => 'public',
+            'sslmode' => 'require',
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),

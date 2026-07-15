@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\Departments\ComplianceService;
 use App\Services\Departments\FinanceService;
+use App\Services\Departments\FulfillmentService;
 use App\Services\Departments\InventoryService;
 use App\Services\Departments\ManufacturingService;
 use App\Services\Departments\SalesService;
@@ -17,6 +18,7 @@ class DashboardController extends Controller
         protected SalesService $salesService,
         protected ManufacturingService $manufacturingService,
         protected ComplianceService $complianceService,
+        protected FulfillmentService $fulfillmentService,
     ) {
     }
 
@@ -24,11 +26,7 @@ class DashboardController extends Controller
      * Show the Executive Dashboard.
      *
      * Every card is computed here from real department services — the
-     * single source of truth shared with the AI aggregators. Order
-     * Fulfillment isn't connected yet, so that portion of Operational
-     * Efficiency stays a clearly-labeled placeholder until that
-     * department's data is synced in, same pattern as Manufacturing
-     * was before it was connected.
+     * single source of truth shared with the AI aggregators.
      */
     public function index(): View
     {
@@ -40,6 +38,8 @@ class DashboardController extends Controller
         $grossProfit = $finance['revenue'] - $finance['expenses'];
         $totalOrders = $sales['total_orders'];
         $inventoryValue = $inventory['inventory_value'];
+
+        $fulfillmentRate = $this->fulfillmentService->fulfillmentRatePercent();
 
         $kpis = [
             [
@@ -73,8 +73,10 @@ class DashboardController extends Controller
             [
                 'icon' => 'truck',
                 'label' => 'On-Time Delivery',
-                'value' => 'N/A',
-                'change' => 'Pending Fulfillment sync',
+                'value' => $fulfillmentRate !== null ? $fulfillmentRate . '%' : 'N/A',
+                'change' => $fulfillmentRate !== null
+                    ? ''
+                    : $this->fulfillmentService->pendingOrdersCount() . ' orders queued, no shipments yet',
                 'change_class' => 'change-up',
             ],
         ];
@@ -100,16 +102,25 @@ class DashboardController extends Controller
         $overdueBuilds = $this->manufacturingService->overdueBuildsCount();
         $manufacturingHealth = round(($completionRate + $qualityRate) / 2, 1);
 
-        // Order Fulfillment isn't connected yet — placeholder pending sync.
-        $fulfillmentRate = 91.3;
-        $delayedShipments = '—';
-        $returnRate = '—';
+        $fulfillmentRate = $this->fulfillmentService->fulfillmentRatePercent();
+        $delayedShipments = $this->fulfillmentService->delayedShipmentsCount();
+        $hasFulfillmentData = $fulfillmentRate !== null;
 
-        $overallHealth = round(($manufacturingHealth + $fulfillmentRate) / 2, 1);
+        // No shipment history yet — show a neutral "no data" state
+        // rather than fabricating a health percentage.
+        $fulfillmentHealthValue = $hasFulfillmentData ? $fulfillmentRate : null;
 
-        [$overallStatus, $overallClass] = $this->healthStatus($overallHealth);
+        [$overallStatus, $overallClass, $overallHealth] = $this->computeOverall($manufacturingHealth, $fulfillmentHealthValue);
         [$mfgStatus, $mfgClass] = $this->healthStatus($manufacturingHealth);
-        [$flfStatus, $flfClass] = $this->healthStatus($fulfillmentRate);
+
+        if ($hasFulfillmentData) {
+            [$flfStatus, $flfClass] = $this->healthStatus($fulfillmentRate);
+            $flfPercent = $fulfillmentRate;
+        } else {
+            $flfStatus = 'No Data';
+            $flfClass = 'health-yellow';
+            $flfPercent = 0;
+        }
 
         $openRisks = $this->complianceService->openRisksCount();
         $risksBySeverity = $this->complianceService->risksBySeverity();
@@ -118,13 +129,20 @@ class DashboardController extends Controller
         $warningPct = (int) round((($risksBySeverity['high'] ?? 0) / $totalSeverity) * 100);
         $minorPct = max(0, 100 - $criticalPct - $warningPct);
 
+        $lowStockMaterials = $this->fulfillmentService->lowStockPackingMaterialsCount();
+
+        $summaryText = "Manufacturing is running at {$completionRate}% completion with a {$qualityRate}% QC pass rate. ";
+        $summaryText .= $hasFulfillmentData
+            ? "Fulfillment is at {$fulfillmentRate}% on-time."
+            : 'Order Fulfillment has ' . $this->fulfillmentService->pendingOrdersCount() . ' orders queued with no shipment history yet.';
+
         return [
             'overall' => [
                 'percent' => $overallHealth,
                 'status' => $overallStatus,
                 'class' => $overallClass,
             ],
-            'summary_text' => "Manufacturing is running at {$completionRate}% completion with a {$qualityRate}% QC pass rate. Fulfillment metrics are pending integration with the Order Fulfillment system.",
+            'summary_text' => $summaryText,
             'manufacturing' => [
                 'percent' => $manufacturingHealth,
                 'health' => $mfgStatus,
@@ -137,14 +155,16 @@ class DashboardController extends Controller
                 ],
             ],
             'fulfillment' => [
-                'percent' => $fulfillmentRate,
+                'percent' => $flfPercent,
                 'health' => $flfStatus,
                 'class' => $flfClass,
-                'detail' => 'Placeholder — pending Order Fulfillment department connection.',
+                'detail' => $hasFulfillmentData
+                    ? 'Live data synced from the Order Fulfillment department.'
+                    : 'No shipments recorded yet — metrics will populate once deliveries begin.',
                 'metrics' => [
-                    ['icon' => 'package-check', 'label' => 'Fulfillment Rate', 'value' => $fulfillmentRate . '%'],
-                    ['icon' => 'clock-alert', 'label' => 'Delayed Shipments', 'value' => $delayedShipments],
-                    ['icon' => 'rotate-ccw', 'label' => 'Return Rate (30d)', 'value' => $returnRate],
+                    ['icon' => 'package-check', 'label' => 'Fulfillment Rate', 'value' => $hasFulfillmentData ? $fulfillmentRate . '%' : 'No data yet'],
+                    ['icon' => 'clock-alert', 'label' => 'Delayed Shipments', 'value' => $delayedShipments ?? 'No data yet'],
+                    ['icon' => 'box', 'label' => 'Low Stock Packing Supplies', 'value' => $lowStockMaterials],
                 ],
             ],
             'risks' => [
@@ -157,6 +177,24 @@ class DashboardController extends Controller
                 'top_issues' => $this->complianceService->topIssuesByAge(5),
             ],
         ];
+    }
+
+    /**
+     * Combines Manufacturing + Fulfillment health into one "overall"
+     * figure. If Fulfillment has no data yet, overall falls back to
+     * Manufacturing alone rather than averaging in a fake number.
+     *
+     * @return array{0: string, 1: string, 2: float}
+     */
+    protected function computeOverall(float $manufacturingHealth, ?float $fulfillmentHealth): array
+    {
+        $overallHealth = $fulfillmentHealth === null
+            ? $manufacturingHealth
+            : round(($manufacturingHealth + $fulfillmentHealth) / 2, 1);
+
+        [$status, $class] = $this->healthStatus($overallHealth);
+
+        return [$status, $class, $overallHealth];
     }
 
     /**
