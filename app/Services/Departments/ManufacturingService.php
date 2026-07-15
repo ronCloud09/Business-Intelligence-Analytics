@@ -4,6 +4,8 @@ namespace App\Services\Departments;
 
 use App\Models\ManufacturingMachine;
 use App\Models\ManufacturingProductionLog;
+use App\Models\ManufacturingQcResult;
+use App\Models\ManufacturingWorkOrder;
 use Illuminate\Support\Carbon;
 
 /**
@@ -70,7 +72,7 @@ class ManufacturingService
             ->selectRaw('SUM(units_produced) as produced, SUM(units_target) as target')
             ->first();
 
-        if (! $totals || (int) $totals->target === 0) {
+        if (!$totals || (int) $totals->target === 0) {
             return 0.0;
         }
 
@@ -86,7 +88,7 @@ class ManufacturingService
             ->selectRaw('SUM(defect_count) as defects, SUM(units_produced) as produced')
             ->first();
 
-        if (! $totals || (int) $totals->produced === 0) {
+        if (!$totals || (int) $totals->produced === 0) {
             return 0.0;
         }
 
@@ -99,5 +101,57 @@ class ManufacturingService
     public function isMachineDown(ManufacturingMachine $machine): bool
     {
         return $machine->status === 'down';
+    }
+
+    /**
+     * Breakdown of work orders by status, sourced from the Manufacturing
+     * department's own system (synced via `sync:manufacturing`).
+     *
+     * @return array<string, int>
+     */
+    public function workOrderStatusBreakdown(): array
+    {
+        return ManufacturingWorkOrder::query()
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status')
+            ->toArray();
+    }
+
+    /**
+     * QC pass rate as a percentage, based on graded results only
+     * (empty/ungraded verdicts are excluded from the denominator).
+     */
+    public function qcPassRatePercent(): float
+    {
+        $graded = ManufacturingQcResult::query()
+            ->whereIn('verdict', ['Pass', 'Warn'])
+            ->count();
+
+        if ($graded === 0) {
+            return 0.0;
+        }
+
+        $passed = ManufacturingQcResult::query()
+            ->where('verdict', 'Pass')
+            ->count();
+
+        return round(($passed / $graded) * 100, 2);
+    }
+
+    /**
+     * Breakdown of QC verdicts (Pass / Warn / Ungraded) for charting.
+     *
+     * @return array<string, int>
+     */
+    public function qcVerdictBreakdown(): array
+    {
+        $rows = ManufacturingQcResult::query()
+            ->selectRaw("CASE WHEN verdict = '' OR verdict IS NULL THEN 'Ungraded' ELSE verdict END as verdict_label, count(*) as total")
+            ->groupBy('verdict_label')
+            ->pluck('total', 'verdict_label')
+            ->toArray();
+
+        return $rows;
     }
 }
