@@ -100,13 +100,18 @@ class DataService
         $delayedShipments = 47;
         $returnRate = 2.1;
 
+
         $overallHealth = round(($completionRate + $qualityRate + $fulfillmentRate) / 3, 1);
         $manufacturingHealth = round(($completionRate + $qualityRate) / 2, 1);
 
-        $getHealthStatus = function($val) {
-            if ($val >= 80) return ['Healthy', 'health-green'];
-            if ($val >= 60) return ['Stable', 'health-yellow'];
-            if ($val >= 40) return ['Warning', 'health-orange'];
+
+        $getHealthStatus = function ($val) {
+            if ($val >= 80)
+                return ['Healthy', 'health-green'];
+            if ($val >= 60)
+                return ['Stable', 'health-yellow'];
+            if ($val >= 40)
+                return ['Warning', 'health-orange'];
             return ['Critical', 'health-red'];
         };
 
