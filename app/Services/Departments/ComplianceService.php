@@ -72,4 +72,24 @@ class ComplianceService
             ->pluck('total', 'severity')
             ->toArray();
     }
+
+    /**
+     * The oldest open risks, for the "Top Issues by Age" table on the
+     * dashboard's Operational Efficiency card.
+     *
+     * @return array<int, array{issue: string, category: string, days_open: int}>
+     */
+    public function topIssuesByAge(int $limit = 5): array
+    {
+        return ComplianceRisk::open()
+            ->orderBy('identified_date')
+            ->limit($limit)
+            ->get()
+            ->map(fn(ComplianceRisk $risk) => [
+                'issue' => $risk->title,
+                'category' => $risk->standard ?? 'General',
+                'days_open' => (int) $risk->identified_date->diffInDays(now()),
+            ])
+            ->toArray();
+    }
 }

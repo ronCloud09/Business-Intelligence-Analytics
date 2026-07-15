@@ -154,4 +154,53 @@ class ManufacturingService
 
         return $rows;
     }
+
+    /**
+     * Percentage of work orders that are Finished, out of all synced
+     * work orders. Used as the "Completion Rate" metric on the
+     * Manufacturing Health card.
+     */
+    public function completionRatePercent(): float
+    {
+        $total = ManufacturingWorkOrder::count();
+
+        if ($total === 0) {
+            return 0.0;
+        }
+
+        $finished = ManufacturingWorkOrder::where('status', 'Finished')->count();
+
+        return round(($finished / $total) * 100, 2);
+    }
+
+    /**
+     * Count of work orders that are past their due date and not yet
+     * Finished or Cancelled. Their `due` field is stored as free text
+     * by the source system, so unparsable values are safely skipped.
+     */
+    public function overdueBuildsCount(): int
+    {
+        return ManufacturingWorkOrder::query()
+            ->whereNotIn('status', ['Finished', 'Cancelled'])
+            ->get()
+            ->filter(function (ManufacturingWorkOrder $workOrder) {
+                $due = $this->safeParseDate($workOrder->due);
+
+                return $due !== null && $due->isPast();
+            })
+            ->count();
+    }
+
+    private function safeParseDate(?string $value): ?Carbon
+    {
+        if (!$value) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services\Departments;
 
+use App\Models\InventoryItem;
 use App\Models\SalesOrder;
 use Illuminate\Support\Carbon;
 
@@ -110,5 +111,67 @@ class SalesService
         }
 
         return $trend;
+    }
+
+    /**
+     * Top products with period-over-period comparison and inventory
+     * health, for the dashboard's "Products Driving Growth" table.
+     * Matches sales orders to inventory items by product name
+     * (best-effort — items with no inventory match show as 'Unknown').
+     *
+     * @return array<int, array{name: string, units_sold: int, prev_units: int, revenue: float, coverage: int, stock_status: string, stock_class: string}>
+     */
+    public function topProductsDetailed(int $limit = 10): array
+    {
+        $now = Carbon::now();
+        $currentStart = $now->copy()->subDays(30);
+        $previousStart = $now->copy()->subDays(60);
+
+        $current = SalesOrder::where('order_date', '>=', $currentStart)
+            ->selectRaw('product_name, SUM(units_sold) as units_sold, SUM(revenue) as revenue')
+            ->groupBy('product_name')
+            ->orderByDesc('units_sold')
+            ->limit($limit)
+            ->get();
+
+        $previous = SalesOrder::whereBetween('order_date', [$previousStart, $currentStart])
+            ->selectRaw('product_name, SUM(units_sold) as units_sold')
+            ->groupBy('product_name')
+            ->pluck('units_sold', 'product_name');
+
+        $inventoryByName = InventoryItem::all()->keyBy('name');
+
+        return $current->map(function ($row) use ($previous, $inventoryByName) {
+            $prevUnits = (int) ($previous[$row->product_name] ?? 0);
+            $item = $inventoryByName->get($row->product_name);
+
+            if (!$item) {
+                $coverage = 0;
+                $stockStatus = 'Unknown';
+                $stockClass = 'bg-med';
+            } elseif ($item->quantity_on_hand <= $item->reorder_threshold) {
+                $coverage = $item->reorder_threshold > 0
+                    ? min(100, (int) round(($item->quantity_on_hand / $item->reorder_threshold) * 100))
+                    : 0;
+                $stockStatus = 'Low Stock';
+                $stockClass = 'bg-high';
+            } else {
+                $coverage = $item->reorder_threshold > 0
+                    ? min(100, (int) round(($item->quantity_on_hand / ($item->reorder_threshold * 2)) * 100))
+                    : 100;
+                $stockStatus = $coverage < 60 ? 'Adequate' : 'In Stock';
+                $stockClass = $coverage < 60 ? 'bg-med' : 'bg-low';
+            }
+
+            return [
+                'name' => $row->product_name,
+                'units_sold' => (int) $row->units_sold,
+                'prev_units' => $prevUnits,
+                'revenue' => (float) $row->revenue,
+                'coverage' => $coverage,
+                'stock_status' => $stockStatus,
+                'stock_class' => $stockClass,
+            ];
+        })->values()->toArray();
     }
 }

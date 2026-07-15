@@ -24,21 +24,13 @@ Route::get('/contactus', function () {
 })->name('contactus');
 
 // Dashboard
-Route::get('/dashboard', function () {
-    return view('dashboard', [
-        'kpis' => DataService::getKpis(),
-        'forecastBoxes' => DataService::getForecastBoxes(),
-        'salesForecast' => DataService::getSalesForecast(),
-        'topProducts' => DataService::getTopProducts(),
-        'operationalEfficiency' => DataService::getOperationalEfficiency(),
-        'briefAlerts' => DataService::getBriefAlerts(),
-    ]);
-})->name('dashboard');
+// Dashboard
+Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
 // AI Insights
 Route::get('/ai-insights', [AIInsightsController::class, 'index'])
     ->name('ai-insights');
-    
+
 // Department Analytics
 Route::get('/department-analytics', function () {
     return view('department-analytics', [
@@ -59,27 +51,39 @@ Route::get('/api/live-data', function () {
     $scenario = request('scenario', 'random');
     $range = request('range', '7d');
 
-    $formatChange = function($change, $isPercent = true) {
-        if ($change == 0) return '0%';
+    $formatChange = function ($change, $isPercent = true) {
+        if ($change == 0)
+            return '0%';
         $prefix = $change >= 0 ? '↑ ' : '↓ ';
         $suffix = $isPercent ? '%' : '';
         return $prefix . abs($change) . $suffix;
     };
-    $changeClass = function($change) {
-        if ($change == 0) return 'change-neutral';
+    $changeClass = function ($change) {
+        if ($change == 0)
+            return 'change-neutral';
         return $change >= 0 ? 'change-up' : 'change-down';
     };
-    
+
     $prev = cache('live_data_prev', [
-        'revenue' => 2350000, 'gross_profit' => 830000, 'orders' => 3800,
-        'inventory' => 1100000, 'delivery' => 91.5, 'repeat' => 42.5,
-        'demand' => 12, 'growth' => 12, 'completion' => 94, 'quality' => 97.5,
-        'fulfillment' => 92.0, 'delayed' => 45, 'returns' => 3.2, 'overdue' => 5,
+        'revenue' => 2350000,
+        'gross_profit' => 830000,
+        'orders' => 3800,
+        'inventory' => 1100000,
+        'delivery' => 91.5,
+        'repeat' => 42.5,
+        'demand' => 12,
+        'growth' => 12,
+        'completion' => 94,
+        'quality' => 97.5,
+        'fulfillment' => 92.0,
+        'delayed' => 45,
+        'returns' => 3.2,
+        'overdue' => 5,
     ]);
 
     // DEMO: Force values into specific ranges based on scenario button
     // DELETE this whole switch block when connecting real database
-    switch($scenario) {
+    switch ($scenario) {
         case 'healthy':
             $completionRate = rand(90, 99);
             $qualityRate = rand(93, 100);
@@ -163,12 +167,12 @@ Route::get('/api/live-data', function () {
     // END DEMO BLOCK
 
     // Clean up decimal values
-    $qualityRate = round((float)$qualityRate, 1);
-    $fulfillmentRate = round((float)$fulfillmentRate, 1);
-    $onTimeDelivery = round((float)$onTimeDelivery, 1);
-    $returnRate = round((float)$returnRate, 1);
-    $repeatPurchaseRate = round((float)$repeatPurchaseRate, 1);
-    
+    $qualityRate = round((float) $qualityRate, 1);
+    $fulfillmentRate = round((float) $fulfillmentRate, 1);
+    $onTimeDelivery = round((float) $onTimeDelivery, 1);
+    $returnRate = round((float) $returnRate, 1);
+    $repeatPurchaseRate = round((float) $repeatPurchaseRate, 1);
+
     $revenueChange = round((($revenue - $prev['revenue']) / $prev['revenue']) * 100, 1);
     $profitChange = round((($grossProfit - $prev['gross_profit']) / $prev['gross_profit']) * 100, 1);
     $ordersChange = round((($orders - $prev['orders']) / $prev['orders']) * 100, 1);
@@ -177,37 +181,51 @@ Route::get('/api/live-data', function () {
     $repeatChange = round($repeatPurchaseRate - $prev['repeat'], 1);
     $demandChange = $highDemandProducts - $prev['demand'];
     $growthChange = $revenueGrowth - $prev['growth'];
-    
-    cache(['live_data_prev' => [
-        'revenue' => $revenue, 'gross_profit' => $grossProfit, 'orders' => $orders,
-        'inventory' => $inventoryValue, 'delivery' => $onTimeDelivery, 'repeat' => $repeatPurchaseRate,
-        'demand' => $highDemandProducts, 'growth' => $revenueGrowth, 'completion' => $completionRate,
-        'quality' => $qualityRate, 'fulfillment' => $fulfillmentRate, 'delayed' => $delayedShipments,
-        'returns' => $returnRate, 'overdue' => $overdueBuilds,
-    ]], now()->addHours(1));
-    
+
+    cache([
+        'live_data_prev' => [
+            'revenue' => $revenue,
+            'gross_profit' => $grossProfit,
+            'orders' => $orders,
+            'inventory' => $inventoryValue,
+            'delivery' => $onTimeDelivery,
+            'repeat' => $repeatPurchaseRate,
+            'demand' => $highDemandProducts,
+            'growth' => $revenueGrowth,
+            'completion' => $completionRate,
+            'quality' => $qualityRate,
+            'fulfillment' => $fulfillmentRate,
+            'delayed' => $delayedShipments,
+            'returns' => $returnRate,
+            'overdue' => $overdueBuilds,
+        ]
+    ], now()->addHours(1));
+
     $overallHealth = round(($completionRate + $qualityRate + $fulfillmentRate) / 3, 1);
     $mfgHealth = round(($completionRate + $qualityRate) / 2, 1);
-    
+
     // Green: 100-80 | Yellow: 79-60 | Orange: 59-40 | Red: below 40
-    $getHealthStatus = function($val) {
-        if ($val >= 80) return ['Healthy', 'health-green'];
-        if ($val >= 60) return ['Stable', 'health-yellow'];
-        if ($val >= 40) return ['Warning', 'health-orange'];
+    $getHealthStatus = function ($val) {
+        if ($val >= 80)
+            return ['Healthy', 'health-green'];
+        if ($val >= 60)
+            return ['Stable', 'health-yellow'];
+        if ($val >= 40)
+            return ['Warning', 'health-orange'];
         return ['Critical', 'health-red'];
     };
-    
+
     [$overallStatus, $overallClass] = $getHealthStatus($overallHealth);
     [$mfgStatus, $mfgClass] = $getHealthStatus($mfgHealth);
     [$flfStatus, $flfClass] = $getHealthStatus($fulfillmentRate);
 
-    $salesData = match($range) {
-        '7d' => ['labels' => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], 'sales' => array_map(fn() => rand(100, 250), range(1,7))],
-        '1m' => ['labels' => ['Wk 1', 'Wk 2', 'Wk 3', 'Wk 4'], 'sales' => array_map(fn() => rand(800, 1400), range(1,4))],
-        '1y' => ['labels' => ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], 'sales' => array_map(fn() => rand(8000, 13000), range(1,12))],
-        default => ['labels' => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], 'sales' => array_map(fn() => rand(100, 250), range(1,7))],
+    $salesData = match ($range) {
+        '7d' => ['labels' => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], 'sales' => array_map(fn() => rand(100, 250), range(1, 7))],
+        '1m' => ['labels' => ['Wk 1', 'Wk 2', 'Wk 3', 'Wk 4'], 'sales' => array_map(fn() => rand(800, 1400), range(1, 4))],
+        '1y' => ['labels' => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], 'sales' => array_map(fn() => rand(8000, 13000), range(1, 12))],
+        default => ['labels' => ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], 'sales' => array_map(fn() => rand(100, 250), range(1, 7))],
     };
-    
+
     return response()->json([
         'revenue' => '₱' . number_format($revenue),
         'revenue_change' => $formatChange($revenueChange),
