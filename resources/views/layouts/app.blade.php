@@ -353,6 +353,22 @@ async function sendAiMessage(presetMessage) {
     }
 }
 </script>
+
+    {{-- 🔍 LOCAL DEBUG: Log query count & load time to browser console --}}
+    
+    @if(app()->environment('local'))
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const queries = @json(DB::getQueryLog());
+            const count = queries.length;
+            const time = (performance.now() / 1000).toFixed(3);
+            console.log(`%c🔍 ${count} database queries executed`, 'font-weight:bold;color:#1B6FC8;');
+            console.log(`%c⏱️ Page loaded in ~${time} seconds`, 'font-weight:bold;color:#16A34A;');
+            console.table(queries.map(q => ({ query: q.query.substring(0, 100) + (q.query.length > 100 ? '...' : ''), time: q.time + 'ms' })));
+        });
+    </script>
+    @endif
+
     @yield('scripts')
 </body>
 </html>
