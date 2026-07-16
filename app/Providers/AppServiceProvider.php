@@ -19,6 +19,10 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
+        if (app()->environment('local')) {
+            DB::enableQueryLog();
+        }
+
         $this->configureDefaults();
     }
 
