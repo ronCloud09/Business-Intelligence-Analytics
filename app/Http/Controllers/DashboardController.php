@@ -9,6 +9,7 @@ use App\Services\Departments\InventoryService;
 use App\Services\Departments\ManufacturingService;
 use App\Services\Departments\SalesService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
@@ -30,16 +31,18 @@ class DashboardController extends Controller
      */
     public function index(): View
     {
-        $finance = $this->financeService->getSnapshot();
-        $inventory = $this->inventoryService->getSnapshot();
-        $sales = $this->salesService->getSnapshot();
+        // Cache the heavy department snapshots for 60 seconds
+        $finance = Cache::remember('dashboard_finance_snapshot', 60, fn () => $this->financeService->getSnapshot());
+        $inventory = Cache::remember('dashboard_inventory_snapshot', 60, fn () => $this->inventoryService->getSnapshot());
+        $sales = Cache::remember('dashboard_sales_snapshot', 60, fn () => $this->salesService->getSnapshot());
+        $topProducts = Cache::remember('dashboard_top_products', 60, fn () => $this->salesService->topProductsDetailed(10));
 
         $totalRevenue = $sales['total_revenue'];
         $grossProfit = $finance['revenue'] - $finance['expenses'];
         $totalOrders = $sales['total_orders'];
         $inventoryValue = $inventory['inventory_value'];
 
-        $fulfillmentRate = $this->fulfillmentService->fulfillmentRatePercent();
+        $fulfillmentRate = Cache::remember('dashboard_fulfillment_rate', 60, fn () => $this->fulfillmentService->fulfillmentRatePercent());
 
         $kpis = [
             [
@@ -81,9 +84,7 @@ class DashboardController extends Controller
             ],
         ];
 
-        $topProducts = $this->salesService->topProductsDetailed(10);
-
-        $operationalEfficiency = $this->buildOperationalEfficiency();
+        $operationalEfficiency = Cache::remember('dashboard_operational_efficiency', 60, fn () => $this->buildOperationalEfficiency());
 
         return view('dashboard', [
             'kpis' => $kpis,
@@ -106,8 +107,6 @@ class DashboardController extends Controller
         $delayedShipments = $this->fulfillmentService->delayedShipmentsCount();
         $hasFulfillmentData = $fulfillmentRate !== null;
 
-        // No shipment history yet — show a neutral "no data" state
-        // rather than fabricating a health percentage.
         $fulfillmentHealthValue = $hasFulfillmentData ? $fulfillmentRate : null;
 
         [$overallStatus, $overallClass, $overallHealth] = $this->computeOverall($manufacturingHealth, $fulfillmentHealthValue);
@@ -179,13 +178,6 @@ class DashboardController extends Controller
         ];
     }
 
-    /**
-     * Combines Manufacturing + Fulfillment health into one "overall"
-     * figure. If Fulfillment has no data yet, overall falls back to
-     * Manufacturing alone rather than averaging in a fake number.
-     *
-     * @return array{0: string, 1: string, 2: float}
-     */
     protected function computeOverall(float $manufacturingHealth, ?float $fulfillmentHealth): array
     {
         $overallHealth = $fulfillmentHealth === null
@@ -197,9 +189,6 @@ class DashboardController extends Controller
         return [$status, $class, $overallHealth];
     }
 
-    /**
-     * @return array{0: string, 1: string}
-     */
     protected function healthStatus(float $value): array
     {
         if ($value >= 80) {
