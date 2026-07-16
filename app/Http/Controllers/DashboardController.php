@@ -8,6 +8,7 @@ use App\Services\Departments\FulfillmentService;
 use App\Services\Departments\InventoryService;
 use App\Services\Departments\ManufacturingService;
 use App\Services\Departments\SalesService;
+use App\Services\Departments\ItsmService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Cache;
 
@@ -20,6 +21,7 @@ class DashboardController extends Controller
         protected ManufacturingService $manufacturingService,
         protected ComplianceService $complianceService,
         protected FulfillmentService $fulfillmentService,
+        protected ItsmService $itsmService,
     ) {
     }
 
@@ -84,7 +86,7 @@ class DashboardController extends Controller
             ],
         ];
 
-        $operationalEfficiency = Cache::remember('dashboard_operational_efficiency', 60, fn () => $this->buildOperationalEfficiency());
+        $operationalEfficiency = $this->buildOperationalEfficiency();
 
         return view('dashboard', [
             'kpis' => $kpis,
@@ -121,19 +123,55 @@ class DashboardController extends Controller
             $flfPercent = 0;
         }
 
+        // Aggregate alerts from all departments (same logic as Live Monitor)
+        $lowStock = $this->inventoryService->lowStockCount();
+        $machinesDown = $this->manufacturingService->machinesDownCount();
+        $overdueBuildsRisk = $this->manufacturingService->overdueBuildsCount();
+        $delayedShipmentsRisk = $this->fulfillmentService->delayedShipmentsCount() ?? 0;
+        $lowPacking = $this->fulfillmentService->lowStockPackingMaterialsCount();
         $openRisks = $this->complianceService->openRisksCount();
+        $highSeverityRisks = $this->complianceService->highSeverityRisksCount();
         $risksBySeverity = $this->complianceService->risksBySeverity();
-        $totalSeverity = array_sum($risksBySeverity) ?: 1;
-        $criticalPct = (int) round((($risksBySeverity['critical'] ?? 0) / $totalSeverity) * 100);
-        $warningPct = (int) round((($risksBySeverity['high'] ?? 0) / $totalSeverity) * 100);
+        $openTickets = $this->itsmService->openTicketsCount();
+        $overduePayments = $this->financeService->overduePaymentsCount();
+        $openPOs = 0; // Procurement — add if available
+        
+
+        // Critical alerts: low stock + machines down + overdue builds + high severity risks
+        $criticalCount = ($lowStock > 0 ? 1 : 0) 
+                       + ($machinesDown > 0 ? 1 : 0) 
+                       + ($overdueBuildsRisk > 0 ? 1 : 0) 
+                       + $highSeverityRisks;
+
+        // Warning alerts: delayed shipments + low packing + other medium issues
+        $warningCount = ($delayedShipmentsRisk > 0 ? 1 : 0) 
+                      + ($lowPacking > 0 ? 1 : 0)
+                      + ($risksBySeverity['medium'] ?? 0)
+                      + ($overduePayments > 0 ? 1 : 0);
+
+        // Info alerts: open tickets + open POs + remaining
+        $infoCount = ($openTickets > 0 ? 1 : 0) 
+                   + ($openPOs > 0 ? 1 : 0);
+
+        $totalAlerts = $criticalCount + $warningCount + $infoCount;
+        $totalSeverity = $totalAlerts > 0 ? $totalAlerts : 1;
+        $criticalPct = (int) round(($criticalCount / $totalSeverity) * 100);
+        $warningPct = (int) round(($warningCount / $totalSeverity) * 100);
         $minorPct = max(0, 100 - $criticalPct - $warningPct);
 
         $lowStockMaterials = $this->fulfillmentService->lowStockPackingMaterialsCount();
 
-        $summaryText = "Manufacturing is running at {$completionRate}% completion with a {$qualityRate}% QC pass rate. ";
-        $summaryText .= $hasFulfillmentData
-            ? "Fulfillment is at {$fulfillmentRate}% on-time."
-            : 'Order Fulfillment has ' . $this->fulfillmentService->pendingOrdersCount() . ' orders queued with no shipment history yet.';
+        $summaryText = $overallHealth >= 80
+            ? "Manufacturing is running at {$completionRate}% completion with a {$qualityRate}% QC pass rate. "
+              . ($hasFulfillmentData ? "Fulfillment is at {$fulfillmentRate}% on-time. Overall operations are healthy." : 'Order Fulfillment is pending initial shipments.')
+            : ($overallHealth >= 60
+                ? "Manufacturing is at {$completionRate}% completion. "
+                  . ($hasFulfillmentData ? "Fulfillment is at {$fulfillmentRate}% on-time. Some metrics need attention." : 'Fulfillment data is pending. Manufacturing requires monitoring.')
+                : ($overallHealth >= 40
+                    ? "Manufacturing completion has dropped to {$completionRate}%. "
+                      . ($hasFulfillmentData ? "Fulfillment is at {$fulfillmentRate}%. Several metrics are below targets." : 'Fulfillment data is pending. Manufacturing needs immediate review.')
+                    : "Critical: Manufacturing is at {$completionRate}% completion. "
+                      . ($hasFulfillmentData ? "Fulfillment is at {$fulfillmentRate}%. Urgent action required across all operations." : 'Fulfillment data is pending. Manufacturing is in critical state.')));
 
         return [
             'overall' => [
@@ -167,7 +205,12 @@ class DashboardController extends Controller
                 ],
             ],
             'risks' => [
-                'total_active' => $openRisks,
+                'total_active' => $totalAlerts,
+                'alert_counts' => [
+                    'critical' => $criticalCount,
+                    'warning' => $warningCount,
+                    'info' => $infoCount,
+                ],
                 'severity_breakdown' => [
                     'critical' => $criticalPct,
                     'warning' => $warningPct,

@@ -5,51 +5,40 @@ namespace App\Services;
 class DataService
 {
     // ============================================================
-    // DASHBOARD KPI CARDS
+    // DEPARTMENT LIST (used by Department Analytics page)
     // ============================================================
-    public static function getKpis(): array
+    public static function getDepartmentList(): array
     {
         return [
-            [
-                'icon' => 'dollar-sign',
-                'label' => 'Total Revenue',
-                'value' => self::formatCurrency(0),
-                'change' => '0%',
-                'change_class' => 'change-up',
-            ],
-            [
-                'icon' => 'pie-chart',
-                'label' => 'Gross Profit',
-                'value' => self::formatCurrency(0),
-                'change' => '0%',
-                'change_class' => 'change-up',
-            ],
-            [
-                'icon' => 'shopping-cart',
-                'label' => 'Orders',
-                'value' => '0',
-                'change' => '0%',
-                'change_class' => 'change-up',
-            ],
-            [
-                'icon' => 'package',
-                'label' => 'Inventory Value',
-                'value' => self::formatCurrency(0),
-                'change' => '0%',
-                'change_class' => 'change-up',
-            ],
-            [
-                'icon' => 'truck',
-                'label' => 'On-Time Delivery',
-                'value' => '0%',
-                'change' => '0%',
-                'change_class' => 'change-up',
-            ],
+            'itsm' => 'ITSM, Compliance & Risk Mgmt',
+            'ecommerce' => 'E-Commerce & CRM',
+            'inventory' => 'Inventory & Warehouse',
+            'manufacturing' => 'Manufacturing & Productions',
+            'bi' => 'Business Intelligence & Analytics',
+            'procurement' => 'Procurement',
+            'finance' => 'Finance & Accounting',
+            'fulfillment' => 'Order Fulfillment',
+            'hr' => 'Human Resources',
         ];
     }
 
     // ============================================================
-    // FORECAST SUB-BOXES
+    // DEPARTMENT ANALYTICS (placeholder — returns empty shape)
+    // ============================================================
+    public static function getDepartment(string $dept): array
+    {
+        return [
+            'title' => $dept,
+            'desc' => '',
+            'stats' => [],
+            'leftTitle' => 'Chart 1',
+            'rightTitle' => 'Chart 2',
+            'bottomCards' => [],
+        ];
+    }
+
+    // ============================================================
+    // SALES FORECAST (used by Historical Sales Trend chart)
     // ============================================================
     public static function getSalesForecast(): array
     {
@@ -60,6 +49,9 @@ class DataService
         ];
     }
 
+    // ============================================================
+    // FORECAST SUB-BOXES (used below the chart on dashboard)
+    // ============================================================
     public static function getForecastBoxes(): array
     {
         return [

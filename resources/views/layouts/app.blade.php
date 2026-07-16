@@ -116,6 +116,13 @@
                     </div>
                     <div class="nav-item-sub">KPI Deep Dive</div>
                 </a>
+                <a href="{{ route('live-monitor') }}" class="nav-item {{ request()->routeIs('live-monitor') ? 'active' : '' }}" data-tooltip="Live Monitor">
+                    <div class="nav-item-title">
+                        <i data-lucide="activity" class="nav-icon"></i>
+                        Live Monitor
+                    </div>
+                    <div class="nav-item-sub">Real‑time Feed</div>
+                </a>
             </div>
             <div class="sidebar-footer">
                 <i data-lucide="info" class="footer-icon"></i>
