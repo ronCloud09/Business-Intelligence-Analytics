@@ -23,69 +23,15 @@
             <div class="header-profile-wrap" id="headerProfileWrap">
                 <button class="header-profile-btn" id="headerProfileBtn">
                     <i data-lucide="user" class="profile-icon"></i>
-                    <span class="notification-badge" id="notificationBadge">3</span>
+                    <span class="notification-badge" id="notificationBadge">0</span>
                 </button>
                 <div class="notification-dropdown" id="notificationDropdown">
                     <div class="notification-dropdown-header">
                         <h3>Notifications</h3>
                         <button class="notification-mark-read" onclick="markAllRead()">Mark all as read</button>
                     </div>
-                    <div class="notification-list">
-                        <div class="notification-item unread" data-notif="1">
-                            <div class="notification-dot"></div>    
-                            <div class="notification-icon bg-icon-red">
-                                <i data-lucide="alert-triangle" class="notif-icon-sm"></i>
-                            </div>
-                            <div class="notification-content">
-                                <p class="notification-title">Inventory Alert</p>
-                                <p class="notification-desc">RTX 4060 GPU stock below reorder threshold</p>
-                                <span class="notification-time">5 min ago</span>
-                            </div>
-                        </div>
-                        <div class="notification-item unread" data-notif="2">
-                            <div class="notification-dot"></div>
-                            <div class="notification-icon bg-icon-orange">
-                                <i data-lucide="alert-circle" class="notif-icon-sm"></i>
-                            </div>
-                            <div class="notification-content">
-                                <p class="notification-title">On-Time Delivery Drop</p>
-                                <p class="notification-desc">Delivery rate fell 3.2% this week to 91.3%</p>
-                                <span class="notification-time">18 min ago</span>
-                            </div>
-                        </div>
-                        <div class="notification-item unread" data-notif="3">
-                            <div class="notification-dot"></div>
-                            <div class="notification-icon bg-icon-blue">
-                                <i data-lucide="trending-up" class="notif-icon-sm"></i>
-                            </div>
-                            <div class="notification-content">
-                                <p class="notification-title">Revenue Milestone</p>
-                                <p class="notification-desc">Monthly revenue exceeded ₱2.4M forecast</p>
-                                <span class="notification-time">2 hrs ago</span>
-                            </div>
-                        </div>
-                        <div class="notification-item" data-notif="4">
-                            <div class="notification-dot"></div>
-                            <div class="notification-icon bg-icon-green">
-                                <i data-lucide="file-text" class="notif-icon-sm"></i>
-                            </div>
-                            <div class="notification-content">
-                                <p class="notification-title">Monthly Report Ready</p>
-                                <p class="notification-desc">May 2026 executive summary available</p>
-                                <span class="notification-time">1 day ago</span>
-                            </div>
-                        </div>
-                        <div class="notification-item" data-notif="5">
-                            <div class="notification-dot"></div>
-                            <div class="notification-icon bg-icon-green">
-                                <i data-lucide="check-circle" class="notif-icon-sm"></i>
-                            </div>
-                            <div class="notification-content">
-                                <p class="notification-title">System Update Complete</p>
-                                <p class="notification-desc">NEXORA BI v1.0.0 deployed successfully</p>
-                                <span class="notification-time">2 days ago</span>
-                            </div>
-                        </div>
+                    <div class="notification-list" id="notificationList">
+                        <p style="text-align:center;color:var(--slate-500);padding:2rem;font-size:11px;">Loading notifications…</p>
                     </div>
                 </div>
             </div>
@@ -172,9 +118,13 @@
         </div>
     </div>
 <script>
-console.log("APP.BLADE VERSION 2");
+console.log("APP.BLADE VERSION 4 — FIXED NOTIFICATIONS");
 
 lucide.createIcons();
+
+// Load read state from localStorage
+let readAlertIds = JSON.parse(localStorage.getItem('nexora_read_alerts') || '[]');
+let currentAlertCount = 0;
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -205,60 +155,136 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Handle clicking individual notifications
     dropdown.addEventListener('click', (e) => {
         const notifItem = e.target.closest('.notification-item');
-
-        if (notifItem && notifItem.classList.contains('unread')) {
+        if (!notifItem) return;
+        
+        const alertId = notifItem.getAttribute('data-alert-id');
+        if (alertId && !readAlertIds.includes(alertId)) {
+            readAlertIds.push(alertId);
+            localStorage.setItem('nexora_read_alerts', JSON.stringify(readAlertIds));
             notifItem.classList.remove('unread');
-            updateBadgeCount();
+            currentAlertCount = document.querySelectorAll('#notificationList .notification-item.unread').length;
+            updateNotificationBadge(currentAlertCount);
         }
     });
+
+    // Start dynamic notifications
+    fetchNotifications();
+    setInterval(fetchNotifications, 30000);
 
 });
 
 function updateBadgeCount() {
+    updateNotificationBadge(currentAlertCount);
+}
 
-    const unreadCount = document.querySelectorAll('.notification-item.unread').length;
-    const badge = document.getElementById('notificationBadge');
-
-    if (unreadCount > 0) {
-        badge.textContent = unreadCount;
-        badge.style.display = 'flex';
-    } else {
-        badge.style.display = 'none';
+// ============================================================
+// DYNAMIC NOTIFICATIONS (from live-feed API)
+// ============================================================
+async function fetchNotifications() {
+    try {
+        const res = await fetch('/api/live-feed');
+        const data = await res.json();
+        renderNotifications(data.alerts || []);
+    } catch(e) {
+        console.error('Notification fetch error:', e);
     }
+}
 
+function renderNotifications(alerts) {
+    const container = document.getElementById('notificationList');
+    if (!container) return;
+    
+    if (alerts.length === 0) {
+        container.innerHTML = '<p style="text-align:center;color:var(--slate-500);padding:2rem;font-size:11px;">All clear — no alerts</p>';
+        currentAlertCount = 0;
+        updateNotificationBadge(0);
+        return;
+    }
+    
+    const iconMap = {
+        'alert-triangle': 'bg-icon-red',
+        'alert-circle': 'bg-icon-orange',
+        'clock-alert': 'bg-icon-red',
+        'cpu': 'bg-icon-orange',
+        'file-text': 'bg-icon-blue',
+        'truck': 'bg-icon-orange',
+        'box': 'bg-icon-orange',
+        'shield': 'bg-icon-red',
+        'ticket': 'bg-icon-blue',
+        'dollar-sign': 'bg-icon-orange',
+    };
+    
+    const timeAgo = (timestamp) => {
+        const seconds = Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000);
+        if (seconds < 10) return 'Just now';
+        if (seconds < 60) return seconds + 's ago';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return minutes + 'm ago';
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return hours + 'h ago';
+        return Math.floor(hours / 24) + 'd ago';
+    };
+    
+    container.innerHTML = alerts.slice(0, 5).map(a => {
+        const alertId = a.id ? String(a.id) : a.title.replace(/\s+/g, '-').toLowerCase();
+        const isRead = readAlertIds.includes(alertId);
+        return `
+        <div class="notification-item ${isRead ? '' : 'unread'}" data-alert-id="${alertId}">
+            <div class="notification-dot"></div>
+            <div class="notification-icon ${iconMap[a.icon] || 'bg-icon-blue'}">
+                <i data-lucide="${a.icon}" class="notif-icon-sm"></i>
+            </div>
+            <div class="notification-content">
+                <p class="notification-title">${a.title}</p>
+                <p class="notification-desc">${a.description}</p>
+                <span class="notification-time">${timeAgo(a.timestamp)}</span>
+            </div>
+        </div>
+    `}).join('');
+    
+    // Count unread
+    currentAlertCount = document.querySelectorAll('#notificationList .notification-item.unread').length;
+    updateNotificationBadge(currentAlertCount);
+    lucide.createIcons();
+}
+
+function updateNotificationBadge(count) {
+    const badge = document.getElementById('notificationBadge');
+    if (badge) {
+        badge.textContent = count || '';
+        badge.style.display = count > 0 ? 'flex' : 'none';
+    }
 }
 
 function markAllRead() {
-
-    document
-        .querySelectorAll('.notification-item.unread')
-        .forEach(item => item.classList.remove('unread'));
-
-    updateBadgeCount();
-
+    document.querySelectorAll('#notificationList .notification-item[data-alert-id]').forEach(item => {
+        const alertId = item.getAttribute('data-alert-id');
+        if (alertId && !readAlertIds.includes(alertId)) {
+            readAlertIds.push(alertId);
+        }
+    });
+    localStorage.setItem('nexora_read_alerts', JSON.stringify(readAlertIds));
+    document.querySelectorAll('#notificationList .notification-item.unread').forEach(item => item.classList.remove('unread'));
+    currentAlertCount = 0;
+    updateNotificationBadge(0);
 }
 
 function handleAiChatKeypress(event) {
-
     if (event.key === 'Enter') {
         sendAiMessage();
     }
-
 }
 
 function escapeHtml(text) {
-
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-
 }
 
-// Make changes so that the chat doesn't reset after removing the ai chatbox
 async function sendAiMessage(presetMessage) {
-
     const input = document.getElementById('aiChatInput');
     const message = presetMessage || input.value.trim();
 
@@ -296,7 +322,6 @@ async function sendAiMessage(presetMessage) {
     sendBtn.disabled = true;
 
     try {
-
         const response = await fetch('/nexora-ai/chat', {
             method: 'POST',
             credentials: 'same-origin',
@@ -337,9 +362,7 @@ async function sendAiMessage(presetMessage) {
         messagesContainer.appendChild(botMsg);
 
     } catch (e) {
-
         console.error("AI Error:", e);
-
         thinkingMsg.remove();
 
         const errMsg = document.createElement('div');
@@ -351,15 +374,11 @@ async function sendAiMessage(presetMessage) {
         `;
 
         messagesContainer.appendChild(errMsg);
-
     } finally {
-
         sendBtn.disabled = false;
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
     }
-}
-</script>
+}</script>
 
     {{-- 🔍 LOCAL DEBUG: Log query count & load time to browser console --}}
     
