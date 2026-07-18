@@ -12,7 +12,7 @@ class FinanceService
     {
         return [
             'revenue' => $this->totalRevenue(),
-            'expenses' => 0.0, // Finance DB has no expense table
+            'expenses' => $this->totalExpenses(),
             'profit_margin' => $this->profitMarginPercent(),
             'overdue_payments' => $this->overduePaymentsTotal(),
             'overdue_count' => $this->overduePaymentsCount(),
@@ -38,8 +38,8 @@ class FinanceService
 
     public function totalExpenses(): float
     {
-        // Finance department currently has invoices only.
-        return 0.0;
+        $expenses = DB::table('finance_dept_expenses')->latest('id')->first();
+        return (float)($expenses->total_expenses ?? 0.0);
     }
 
     public function profitMarginPercent(): float

@@ -18,10 +18,6 @@ use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 
 use App\Services\DataService;
-
-// LIVE MONITOR
-
-use Illuminate\Http\Request;
 use App\Services\Departments\FinanceService;
 use App\Services\Departments\InventoryService;
 use App\Services\Departments\SalesService;
@@ -30,15 +26,19 @@ use App\Services\Departments\ProcurementService;
 use App\Services\Departments\FulfillmentService;
 use App\Services\Departments\ComplianceService;
 use App\Services\Departments\ItsmService;
+use App\Services\Departments\BiService;
 
+// ============================================================
+// LIVE MONITOR API
+// ============================================================
 Route::get('/api/live-feed', function () {
-    $financeService = app(App\Services\Departments\FinanceService::class);
-    $inventoryService = app(App\Services\Departments\InventoryService::class);
-    $manufacturingService = app(App\Services\Departments\ManufacturingService::class);
-    $fulfillmentService = app(App\Services\Departments\FulfillmentService::class);
-    $complianceService = app(App\Services\Departments\ComplianceService::class);
-    $procurementService = app(App\Services\Departments\ProcurementService::class);
-    $itsmService = app(App\Services\Departments\ItsmService::class);
+    $financeService = app(FinanceService::class);
+    $inventoryService = app(InventoryService::class);
+    $manufacturingService = app(ManufacturingService::class);
+    $fulfillmentService = app(FulfillmentService::class);
+    $complianceService = app(ComplianceService::class);
+    $procurementService = app(ProcurementService::class);
+    $itsmService = app(ItsmService::class);
 
     $alerts = [];
     $critical = $warning = $info = 0;
@@ -57,9 +57,7 @@ Route::get('/api/live-feed', function () {
     if ($lowStock > 0) {
         $critical++;
         $alerts[] = [
-            'severity' => 'critical',
-            'icon' => 'alert-triangle',
-            'department' => 'Inventory',
+            'severity' => 'critical', 'icon' => 'alert-triangle', 'department' => 'Inventory',
             'title' => "{$lowStock} Items Low Stock",
             'description' => 'Stock levels have fallen below reorder thresholds.',
             'timestamp' => $latestTimestamp(InventoryDeptStockLevel::class),
@@ -75,9 +73,7 @@ Route::get('/api/live-feed', function () {
     if ($down > 0) {
         $warning++;
         $alerts[] = [
-            'severity' => 'warning',
-            'icon' => 'cpu',
-            'department' => 'Manufacturing',
+            'severity' => 'warning', 'icon' => 'cpu', 'department' => 'Manufacturing',
             'title' => "{$down} Machines Down",
             'description' => 'Production equipment offline or under maintenance.',
             'timestamp' => $latestTimestamp(ManufacturingMachine::class, 'last_status_change_at'),
@@ -93,9 +89,7 @@ Route::get('/api/live-feed', function () {
     if ($overdue > 0) {
         $critical++;
         $alerts[] = [
-            'severity' => 'critical',
-            'icon' => 'clock-alert',
-            'department' => 'Manufacturing',
+            'severity' => 'critical', 'icon' => 'clock-alert', 'department' => 'Manufacturing',
             'title' => "{$overdue} Overdue Builds",
             'description' => 'Work orders past their due date.',
             'timestamp' => $latestTimestamp(ManufacturingWorkOrder::class),
@@ -111,9 +105,7 @@ Route::get('/api/live-feed', function () {
     if ($openPO > 0) {
         $info++;
         $alerts[] = [
-            'severity' => 'info',
-            'icon' => 'file-text',
-            'department' => 'Procurement',
+            'severity' => 'info', 'icon' => 'file-text', 'department' => 'Procurement',
             'title' => "{$openPO} Open Purchase Orders",
             'description' => 'Active purchase orders awaiting delivery or approval.',
             'timestamp' => $latestTimestamp(ProcurementOrder::class, 'created_at'),
@@ -129,9 +121,7 @@ Route::get('/api/live-feed', function () {
     if ($delayed && $delayed > 0) {
         $warning++;
         $alerts[] = [
-            'severity' => 'warning',
-            'icon' => 'truck',
-            'department' => 'Fulfillment',
+            'severity' => 'warning', 'icon' => 'truck', 'department' => 'Fulfillment',
             'title' => "{$delayed} Delayed Shipments",
             'description' => 'Shipments past their due date.',
             'timestamp' => $latestTimestamp(FulfillmentShipment::class),
@@ -147,9 +137,7 @@ Route::get('/api/live-feed', function () {
     if ($lowPacking > 0) {
         $warning++;
         $alerts[] = [
-            'severity' => 'warning',
-            'icon' => 'box',
-            'department' => 'Fulfillment',
+            'severity' => 'warning', 'icon' => 'box', 'department' => 'Fulfillment',
             'title' => "{$lowPacking} Packing Materials Low",
             'description' => 'Packing supplies below reorder threshold.',
             'timestamp' => $latestTimestamp(FulfillmentPackingMaterial::class),
@@ -165,9 +153,7 @@ Route::get('/api/live-feed', function () {
     if ($openRisks > 0) {
         $critical++;
         $alerts[] = [
-            'severity' => 'critical',
-            'icon' => 'shield',
-            'department' => 'Compliance',
+            'severity' => 'critical', 'icon' => 'shield', 'department' => 'Compliance',
             'title' => "{$openRisks} Open Compliance Risks",
             'description' => 'Active risks requiring review.',
             'timestamp' => $latestTimestamp(ComplianceRisk::class, 'identified_date'),
@@ -183,9 +169,7 @@ Route::get('/api/live-feed', function () {
     if ($openTickets > 0) {
         $info++;
         $alerts[] = [
-            'severity' => 'info',
-            'icon' => 'ticket',
-            'department' => 'ITSM',
+            'severity' => 'info', 'icon' => 'ticket', 'department' => 'ITSM',
             'title' => "{$openTickets} Open Tickets",
             'description' => 'Active IT service tickets requiring attention.',
             'timestamp' => $latestTimestamp(ItsmTicket::class, 'opened_at'),
@@ -201,9 +185,7 @@ Route::get('/api/live-feed', function () {
     if ($overduePayments > 0) {
         $warning++;
         $alerts[] = [
-            'severity' => 'warning',
-            'icon' => 'dollar-sign',
-            'department' => 'Finance',
+            'severity' => 'warning', 'icon' => 'dollar-sign', 'department' => 'Finance',
             'title' => "{$overduePayments} Overdue Invoices",
             'description' => 'Payments past due.',
             'timestamp' => $latestTimestamp(FinanceDeptInvoice::class),
@@ -213,62 +195,119 @@ Route::get('/api/live-feed', function () {
             ],
         ];
     }
-    
-    // Sort alerts by timestamp descending (most recent first)
+
     usort($alerts, fn($a, $b) => strtotime($b['timestamp']) - strtotime($a['timestamp']));
 
     return response()->json([
         'alerts' => $alerts,
-        'summary' => [
-            'critical' => $critical,
-            'warning' => $warning,
-            'info' => $info,
-        ],
+        'summary' => ['critical' => $critical, 'warning' => $warning, 'info' => $info],
     ]);
 });
-// LIVE MONITOR PAGE END BLOCK
 
-// Home redirects to signin
+// ============================================================
+// PAGES
+// ============================================================
 Route::redirect('/', '/signin')->name('home');
-
-// Sign-in page
-Route::get('/signin', function () {
-    return view('signIn');
-})->name('signin');
-
-// Contact us page
-Route::get('/contactus', function () {
-    return view('contactus');
-})->name('contactus');
-
-// Dashboard
+Route::get('/signin', fn() => view('signIn'))->name('signin');
+Route::get('/contactus', fn() => view('contactus'))->name('contactus');
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-// AI Insights
-Route::get('/ai-insights', [AIInsightsController::class, 'index'])
-    ->name('ai-insights');
+Route::get('/ai-insights', [AIInsightsController::class, 'index'])->name('ai-insights');
+Route::get('/live-monitor', fn() => view('live-monitor'))->name('live-monitor');
 
 // Department Analytics
-Route::get('/department-analytics', function () {
-    return view('department-analytics', [
-        'departments' => DataService::getDepartmentList(),
-    ]);
-})->name('department-analytics');
+Route::get('/department-analytics', fn() => view('department-analytics', [
+    'departments' => DataService::getDepartmentList(),
+]))->name('department-analytics');
 
 // Department Analytics API
 Route::get('/api/department/{dept}', function ($dept) {
-    return response()->json(DataService::getDepartment($dept));
+    $financeService = app(FinanceService::class);
+    $inventoryService = app(InventoryService::class);
+    $salesService = app(SalesService::class);
+    $manufacturingService = app(ManufacturingService::class);
+    $procurementService = app(ProcurementService::class);
+    $fulfillmentService = app(FulfillmentService::class);
+    $itsmService = app(ItsmService::class);
+
+    return response()->json(match($dept) {
+        'ecommerce' => array_merge($salesService->getSnapshot(), [
+            'chart1' => ['type' => 'line', 'label' => 'Revenue Trend (7d)', 'data' => $salesService->revenueTrend(7)],
+            'chart2' => ['type' => 'bar', 'label' => 'Top Products', 'data' => $salesService->topProducts(5)],
+        ]),
+        'inventory' => array_merge(
+            $inventoryService->getSnapshot(),
+            [
+                'chart1' => ['type' => 'doughnut', 'label' => 'Stock by Category', 'data' => DB::table('inventory_dept_items')->join('inventory_dept_categories', 'inventory_dept_items.source_category_id', '=', 'inventory_dept_categories.source_id')->selectRaw("inventory_dept_categories.name as category, COUNT(*) as count")->groupBy('inventory_dept_categories.name')->get()->map(fn($r) => ['label' => $r->category, 'value' => $r->count])->values()->toArray()],
+                'chart2' => ['type' => 'bar', 'label' => 'Stock by Warehouse', 'data' => DB::table('inventory_dept_stock_levels')->join('inventory_dept_warehouses', 'inventory_dept_stock_levels.source_warehouse_id', '=', 'inventory_dept_warehouses.source_id')->selectRaw("inventory_dept_warehouses.name as warehouse, SUM(quantity_on_hand) as total")->groupBy('inventory_dept_warehouses.name')->get()->map(fn($r) => ['label' => $r->warehouse, 'value' => $r->total])->values()->toArray()],
+            ]
+        ),
+        'manufacturing' => array_merge($manufacturingService->getSnapshot(), [
+            'chart1' => ['type' => 'doughnut', 'label' => 'Machine Status', 'data' => collect($manufacturingService->machineStatusBreakdown())->map(fn($c, $s) => ['label' => ucfirst($s), 'value' => $c])->values()->toArray()],
+            'chart2' => ['type' => 'doughnut', 'label' => 'Work Order Status', 'data' => collect($manufacturingService->workOrderStatusBreakdown())->map(fn($c, $s) => ['label' => $s, 'value' => $c])->values()->toArray()],
+        ]),
+        'procurement' => array_merge($procurementService->getSnapshot(), [
+            'chart1' => ['type' => 'doughnut', 'label' => 'Orders by Status', 'data' => collect($procurementService->ordersByStatus())->map(fn($c, $s) => ['label' => ucfirst($s), 'value' => $c])->values()->toArray()],
+            'chart2' => ['type' => 'bar', 'label' => 'Open Orders Overview', 'data' => [['label' => 'Open Orders', 'value' => $procurementService->openOrdersCount()], ['label' => 'Expedited', 'value' => $procurementService->expeditedOrdersCount()]]],
+        ]),
+        'finance' => array_merge(
+            $financeService->getSnapshot(),
+            [
+                'chart1' => ['type' => 'line', 'label' => 'Revenue Trend (7d)', 'data' => $financeService->revenueTrend(7)],
+                'chart2' => ['type' => 'doughnut', 'label' => 'Expense Breakdown', 'data' => (function() {
+                    $expenses = DB::table('finance_dept_expenses')->latest('id')->first();
+                    if (!$expenses) return [];
+                    return [
+                        ['label' => 'Manufacturing', 'value' => (float)($expenses->manufacturing ?? 0)],
+                        ['label' => 'Procurement', 'value' => (float)($expenses->procurement ?? 0)],
+                        ['label' => 'Inventory', 'value' => (float)($expenses->inventory ?? 0)],
+                        ['label' => 'Fulfillment', 'value' => (float)($expenses->order_fulfillment ?? 0)],
+                    ];
+                })()],
+                'expense_summary' => (function() {
+                    $expenses = DB::table('finance_dept_expenses')->latest('id')->first();
+                    if (!$expenses) return null;
+                    return [
+                        'manufacturing' => (float)($expenses->manufacturing ?? 0),
+                        'procurement' => (float)($expenses->procurement ?? 0),
+                        'inventory' => (float)($expenses->inventory ?? 0),
+                        'order_fulfillment' => (float)($expenses->order_fulfillment ?? 0),
+                        'total_expenses' => (float)($expenses->total_expenses ?? 0),
+                    ];
+                })(),
+            ]
+        ),
+        'fulfillment' => array_merge($fulfillmentService->getSnapshot() ?: ['pending_orders' => $fulfillmentService->pendingOrdersCount()], [
+            'chart1' => ['type' => 'bar', 'label' => 'Fulfillment Overview', 'data' => [['label' => 'Pending Orders', 'value' => $fulfillmentService->pendingOrdersCount()], ['label' => 'Total Orders', 'value' => $fulfillmentService->totalOrdersCount()], ['label' => 'Total Shipments', 'value' => $fulfillmentService->totalShipmentsCount()]]],
+            'chart2' => ['type' => 'bar', 'label' => 'Low Stock Materials', 'data' => collect($fulfillmentService->lowStockPackingMaterials())->map(fn($m) => ['label' => $m['name'], 'value' => $m['stock_qty']])->values()->toArray()],
+        ]),
+        'itsm' => array_merge(
+            $itsmService->getSnapshot(),
+            [
+                'chart1' => ['type' => 'doughnut', 'label' => 'Resolution Status', 'data' => [
+                    ['label' => 'Open', 'value' => $itsmService->openTicketsCount()],
+                    ['label' => 'Resolved', 'value' => max(0, (DB::table('itsm_tickets')->count() ?? 0) - $itsmService->openTicketsCount())],
+                ]],
+                'chart2' => ['type' => 'bar', 'label' => 'Ticket Overview', 'data' => [['label' => 'Open', 'value' => $itsmService->openTicketsCount()], ['label' => 'Critical', 'value' => $itsmService->criticalTicketsCount()]]],
+            ]
+        ),
+        'bi' => array_merge(
+            app(BiService::class)->getSnapshot(),
+            [
+                'chart1' => ['type' => 'doughnut', 'label' => 'Department Connections', 'data' => [
+                    ['label' => 'Connected', 'value' => app(BiService::class)->connectedDepartmentsCount()],
+                    ['label' => 'Pending', 'value' => app(BiService::class)->totalDepartmentsCount() - app(BiService::class)->connectedDepartmentsCount()],
+                ]],
+                'chart2' => ['type' => 'bar', 'label' => 'Records by Department', 'data' => collect(app(BiService::class)->recordsByDepartment())->map(fn($count, $dept) => ['label' => $dept, 'value' => $count])->values()->toArray()],
+            ]
+        ),
+        default => ['title' => $dept, 'desc' => 'No data available', 'chart1' => null, 'chart2' => null],
+    });
 });
 
-// Live Monitor Page
-Route::get('/live-monitor', function () {
-    return view('live-monitor');
-})->name('live-monitor');
+// Login
+Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login'])->name('login');
 
-// Login processing
-Route::post('/login', [\App\Http\Controllers\Auth\LoginController::class, 'login'])->name('login');
-
-// NEXORA AI — foundation endpoints
+// NEXORA AI
 Route::prefix('nexora-ai')->name('ai.')->group(function () {
     Route::get('/current-report', [AIController::class, 'current'])->name('current');
     Route::post('/refresh', [AIController::class, 'refresh'])->name('refresh');

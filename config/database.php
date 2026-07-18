@@ -90,10 +90,14 @@ return [
         'manufacturing_dept' => [
             'driver' => 'pgsql',
             'url' => env('MANUFACTURING_DB_URL'),
+            'host' => parse_url(env('MANUFACTURING_DB_URL'), PHP_URL_HOST),
+            'port' => parse_url(env('MANUFACTURING_DB_URL'), PHP_URL_PORT) ?? '5432',
+            'database' => ltrim(parse_url(env('MANUFACTURING_DB_URL'), PHP_URL_PATH), '/'),
+            'username' => urldecode(parse_url(env('MANUFACTURING_DB_URL'), PHP_URL_USER) ?? ''),
+            'password' => parse_url(env('MANUFACTURING_DB_URL'), PHP_URL_PASS) ?? '',
             'charset' => 'utf8',
             'prefix' => '',
-            'prefix_indexes' => true,
-            'search_path' => 'public',
+            'schema' => 'public',
             'sslmode' => 'require',
         ],
 
