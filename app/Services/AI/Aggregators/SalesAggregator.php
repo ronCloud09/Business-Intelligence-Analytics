@@ -2,20 +2,19 @@
 
 namespace App\Services\AI\Aggregators;
 
-use App\Services\Departments\SalesService;
+use App\Services\Departments\EcommerceService;
 
-/**
- * Shapes Sales / E-Commerce KPIs for AI consumption.
- */
 class SalesAggregator
 {
-    public function __construct(protected SalesService $salesService) {}
+    public function __construct(protected EcommerceService $ecommerceService)
+    {
+    }
 
     /**
      * @return array<string, mixed>
      */
     public function summarize(): array
     {
-        return $this->salesService->getKpiSummaryForAi();
+        return $this->ecommerceService->getKpiSummaryForAi();
     }
 }

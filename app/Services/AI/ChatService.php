@@ -9,7 +9,6 @@ use App\Services\Departments\InventoryService;
 use App\Services\Departments\ItsmService;
 use App\Services\Departments\ManufacturingService;
 use App\Services\Departments\ProcurementService;
-use App\Services\Departments\SalesService;
 use Illuminate\Support\Str;
 
 class ChatService
@@ -24,7 +23,6 @@ class ChatService
         protected ProcurementService $procurementService,
         protected ComplianceService $complianceService,
         protected ItsmService $itsmService,
-        protected SalesService $salesService,
     ) {
     }
     /**
@@ -148,7 +146,7 @@ class ChatService
             Str::contains($q, 'revenue')
             && Str::contains($q, 'today')
         ) {
-            $trend = $this->salesService->revenueTrend(1);
+            $trend = $this->financeService->revenueTrend(1);
             $revenue = $trend[0]['total'] ?? 0;
 
             return 'Today\'s revenue is ₱'
@@ -496,7 +494,7 @@ class ChatService
                 'current day',
             ])
         ) {
-            $trend = $this->salesService->revenueTrend(1);
+            $trend = $this->financeService->revenueTrend(1);
             $revenue = $trend[0]['total'] ?? 0;
 
             return 'Today\'s revenue is ₱'
