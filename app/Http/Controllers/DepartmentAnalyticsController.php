@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Services\Departments\ComplianceService;
-use App\Services\Departments\EcommerceService;
 use App\Services\Departments\FinanceService;
 use App\Services\Departments\InventoryService;
 use App\Services\Departments\ItsmService;
 use App\Services\Departments\ManufacturingService;
 use App\Services\Departments\ProcurementService;
+use App\Services\Departments\SalesService;
 use Illuminate\Contracts\View\View;
 
 class DepartmentAnalyticsController extends Controller
@@ -20,9 +20,8 @@ class DepartmentAnalyticsController extends Controller
         protected ProcurementService $procurementService,
         protected ComplianceService $complianceService,
         protected ItsmService $itsmService,
-        protected EcommerceService $ecommerceService,
-    ) {
-    }
+        protected SalesService $salesService,
+    ) {}
 
     /**
      * Show Department Analytics.
@@ -43,7 +42,7 @@ class DepartmentAnalyticsController extends Controller
                 'manufacturing' => $this->manufacturingTab(),
                 'procurement' => $this->procurementTab(),
                 'itsm' => $this->itsmTab(),
-                'ecommerce' => $this->ecommerceTab(),
+                'ecommerce' => $this->salesTab(),
             ],
         ]);
     }
@@ -60,9 +59,9 @@ class DepartmentAnalyticsController extends Controller
             'desc' => 'Revenue, expenses, and payment health across the business.',
             'stats' => [
                 ['icon' => 'dollar-sign', 'label' => 'Total Revenue', 'value' => $this->money($finance['revenue']), 'change' => '', 'cls' => ''],
-                ['icon' => 'trending-up', 'label' => 'Profit Margin', 'value' => $finance['profit_margin'] . '%', 'change' => '', 'cls' => ''],
+                ['icon' => 'trending-up', 'label' => 'Profit Margin', 'value' => $finance['profit_margin'].'%', 'change' => '', 'cls' => ''],
                 ['icon' => 'credit-card', 'label' => 'Total Expenses', 'value' => $this->money($finance['expenses']), 'change' => '', 'cls' => ''],
-                ['icon' => 'alert-circle', 'label' => 'Overdue Payments', 'value' => $this->money($finance['overdue_payments']), 'change' => $finance['overdue_count'] . ' invoices', 'cls' => $finance['overdue_count'] > 0 ? 'change-down' : 'change-up'],
+                ['icon' => 'alert-circle', 'label' => 'Overdue Payments', 'value' => $this->money($finance['overdue_payments']), 'change' => $finance['overdue_count'].' invoices', 'cls' => $finance['overdue_count'] > 0 ? 'change-down' : 'change-up'],
             ],
             'leftTitle' => 'Revenue Trend (7 Days)',
             'rightTitle' => 'Revenue by Category',
@@ -72,7 +71,7 @@ class DepartmentAnalyticsController extends Controller
                     'type' => 'table',
                     'headers' => ['Category', 'Total'],
                     'rows' => collect($finance['revenue_by_category'])
-                        ->map(fn($row) => [$row['category'], $this->money($row['total'])])
+                        ->map(fn ($row) => [$row['category'], $this->money($row['total'])])
                         ->toArray(),
                 ],
             ],
@@ -103,7 +102,7 @@ class DepartmentAnalyticsController extends Controller
                     'type' => 'table',
                     'headers' => ['Item', 'Stock', 'Threshold'],
                     'rows' => collect($inventory['low_stock_items'])
-                        ->map(fn($row) => [$row['name'], $row['quantity_on_hand'], $row['reorder_threshold']])
+                        ->map(fn ($row) => [$row['name'], $row['quantity_on_hand'], $row['reorder_threshold']])
                         ->toArray(),
                 ],
             ],
@@ -122,10 +121,10 @@ class DepartmentAnalyticsController extends Controller
             'title' => 'Manufacturing & Production',
             'desc' => 'Machine status, downtime, and production output.',
             'stats' => [
-                ['icon' => 'gauge', 'label' => 'Production Rate', 'value' => $manufacturing['production_rate_percent'] . '%', 'change' => '', 'cls' => ''],
+                ['icon' => 'gauge', 'label' => 'Production Rate', 'value' => $manufacturing['production_rate_percent'].'%', 'change' => '', 'cls' => ''],
                 ['icon' => 'alert-triangle', 'label' => 'Machines Down', 'value' => (string) $manufacturing['machines_down'], 'change' => '', 'cls' => $manufacturing['machines_down'] > 0 ? 'change-down' : 'change-up'],
                 ['icon' => 'clock', 'label' => 'Downtime (min today)', 'value' => (string) $manufacturing['total_downtime_minutes'], 'change' => '', 'cls' => ''],
-                ['icon' => 'percent', 'label' => 'Defect Rate', 'value' => $manufacturing['defect_rate_percent'] . '%', 'change' => '', 'cls' => ''],
+                ['icon' => 'percent', 'label' => 'Defect Rate', 'value' => $manufacturing['defect_rate_percent'].'%', 'change' => '', 'cls' => ''],
             ],
             'leftTitle' => 'Machine Status Breakdown',
             'rightTitle' => 'Production Rate',
@@ -135,7 +134,7 @@ class DepartmentAnalyticsController extends Controller
                     'type' => 'table',
                     'headers' => ['Status', 'Machines'],
                     'rows' => collect($statusBreakdown)
-                        ->map(fn($count, $status) => [ucfirst($status), $count])
+                        ->map(fn ($count, $status) => [ucfirst($status), $count])
                         ->values()
                         ->toArray(),
                 ],
@@ -166,7 +165,7 @@ class DepartmentAnalyticsController extends Controller
                     'type' => 'table',
                     'headers' => ['Status', 'Orders'],
                     'rows' => collect($procurement['orders_by_status'])
-                        ->map(fn($count, $status) => [ucfirst(str_replace('_', ' ', $status)), $count])
+                        ->map(fn ($count, $status) => [ucfirst(str_replace('_', ' ', $status)), $count])
                         ->values()
                         ->toArray(),
                 ],
@@ -187,9 +186,9 @@ class DepartmentAnalyticsController extends Controller
             'desc' => 'IT service management, compliance tracking, and risk assessment metrics.',
             'stats' => [
                 ['icon' => 'ticket', 'label' => 'Open Tickets', 'value' => (string) $itsm['open_tickets'], 'change' => '', 'cls' => ''],
-                ['icon' => 'shield', 'label' => 'Compliance Score', 'value' => $compliance['compliance_score_percent'] . '%', 'change' => '', 'cls' => ''],
+                ['icon' => 'shield', 'label' => 'Compliance Score', 'value' => $compliance['compliance_score_percent'].'%', 'change' => '', 'cls' => ''],
                 ['icon' => 'alert-triangle', 'label' => 'High Risks', 'value' => (string) $compliance['high_severity_risks'], 'change' => '', 'cls' => $compliance['high_severity_risks'] > 0 ? 'change-down' : 'change-up'],
-                ['icon' => 'clock', 'label' => 'Avg Resolution', 'value' => $itsm['avg_resolution_hours'] . 'h', 'change' => '', 'cls' => ''],
+                ['icon' => 'clock', 'label' => 'Avg Resolution', 'value' => $itsm['avg_resolution_hours'].'h', 'change' => '', 'cls' => ''],
             ],
             'leftTitle' => 'Ticket Volume by Priority',
             'rightTitle' => 'Risk by Severity',
@@ -199,7 +198,7 @@ class DepartmentAnalyticsController extends Controller
                     'type' => 'table',
                     'headers' => ['Priority', 'Open Tickets'],
                     'rows' => collect($itsm['tickets_by_priority'])
-                        ->map(fn($count, $priority) => [ucfirst($priority), $count])
+                        ->map(fn ($count, $priority) => [ucfirst($priority), $count])
                         ->values()
                         ->toArray(),
                 ],
@@ -208,7 +207,7 @@ class DepartmentAnalyticsController extends Controller
                     'type' => 'table',
                     'headers' => ['Severity', 'Open Risks'],
                     'rows' => collect($compliance['risks_by_severity'])
-                        ->map(fn($count, $severity) => [ucfirst($severity), $count])
+                        ->map(fn ($count, $severity) => [ucfirst($severity), $count])
                         ->values()
                         ->toArray(),
                 ],
@@ -217,38 +216,31 @@ class DepartmentAnalyticsController extends Controller
     }
 
     /**
-     * E-Commerce & CRM tab. Backed by EcommerceService, which reads the
-     * ecommerce_dept_* product-catalog tables (gaming laptops, prebuilt
-     * configs, configurator configs) — there is no orders/customers
-     * table in the synced data, so these stats are catalog-based
-     * proxies for the old order-based ones. See the docblock on
-     * EcommerceService for the full explanation of each substitution.
-     *
      * @return array<string, mixed>
      */
-    protected function ecommerceTab(): array
+    protected function salesTab(): array
     {
-        $ecommerce = $this->ecommerceService->getSnapshot();
+        $sales = $this->salesService->getSnapshot();
 
         return [
-            'title' => 'E-Commerce & CRM',
-            'desc' => 'Catalog value, product availability, and customer ratings across the storefront.',
+            'title' => 'E-Commerce',
+            'desc' => 'Online sales performance, customer acquisition, and retention metrics.',
             'stats' => [
-                ['icon' => 'dollar-sign', 'label' => 'Catalog Value', 'value' => $this->money($ecommerce['catalog_value']), 'change' => '', 'cls' => ''],
-                ['icon' => 'shopping-cart', 'label' => 'Products Listed', 'value' => number_format($ecommerce['total_products']), 'change' => '', 'cls' => ''],
-                ['icon' => 'x-circle', 'label' => 'Sold Out Items', 'value' => number_format($ecommerce['sold_out_count']), 'change' => '', 'cls' => $ecommerce['sold_out_count'] > 0 ? 'change-down' : 'change-up'],
-                ['icon' => 'star', 'label' => 'Average Rating', 'value' => number_format($ecommerce['average_rating'], 2), 'change' => '', 'cls' => ''],
+                ['icon' => 'dollar-sign', 'label' => 'Total Revenue', 'value' => $this->money($sales['total_revenue']), 'change' => '', 'cls' => ''],
+                ['icon' => 'shopping-cart', 'label' => 'Units Sold', 'value' => number_format($sales['total_orders']), 'change' => '', 'cls' => ''],
+                ['icon' => 'users', 'label' => 'New Customers', 'value' => number_format($sales['new_customers']), 'change' => '', 'cls' => ''],
+                ['icon' => 'percent', 'label' => 'New Customer Rate', 'value' => $sales['conversion_rate_percent'].'%', 'change' => '', 'cls' => ''],
             ],
-            'leftTitle' => 'New Listings Value (7 Days)',
-            'rightTitle' => 'Top Products by Price',
+            'leftTitle' => 'Sales Performance Trend',
+            'rightTitle' => 'Top Products',
             'bottomCards' => [
                 [
-                    'title' => 'Top Products by Price',
+                    'title' => 'Top Selling Products',
                     'type' => 'table',
-                    'headers' => ['Product', 'Category', 'Price'],
-                    'rows' => collect($ecommerce['top_products'])
+                    'headers' => ['Product', 'Units', 'Revenue'],
+                    'rows' => collect($sales['top_products'])
                         ->take(5)
-                        ->map(fn($row) => [$row['product_name'], $row['source'], $this->money($row['price'])])
+                        ->map(fn ($row) => [$row['product_name'], $row['units_sold'], $this->money($row['revenue'])])
                         ->toArray(),
                 ],
             ],
@@ -257,6 +249,6 @@ class DepartmentAnalyticsController extends Controller
 
     protected function money(float $amount): string
     {
-        return '₱' . number_format($amount, 2);
+        return '₱'.number_format($amount, 2);
     }
 }

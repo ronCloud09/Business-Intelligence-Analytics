@@ -13,120 +13,35 @@ class SyncProcurementData extends Command
 
     protected $description = 'Pull procurement data into local mirror tables';
 
-    protected const CHUNK_SIZE = 500;
-
     public function handle(): int
     {
         $this->info('Syncing procurement_dept -> local tables...');
 
-        // procurement_dept_companies columns match
-        // ProcurementDeptCompany::$fillable: source_id, company_name,
-        // industry, company_email, phone_no, admin_name, admin_user_id,
-        // employee_table_name, status, source_created_at, source_updated_at.
+        // Companies (suppliers)
         try {
-            $companiesSynced = $this->syncTable(
-                'companies',
-                ProcurementDeptCompany::class,
-                fn($row) => [
-                    'source_id' => $row->id,
-                    'company_name' => $row->company_name ?? $row->name ?? '',
-                    'industry' => $row->industry ?? null,
-                    'company_email' => $row->company_email ?? $row->email ?? null,
-                    'phone_no' => $row->phone_no ?? $row->phone ?? null,
-                    'admin_name' => $row->admin_name ?? null,
-                    'admin_user_id' => $row->admin_user_id ?? null,
-                    'employee_table_name' => $row->employee_table_name ?? null,
-                    'status' => $row->status ?? null,
-                    'source_created_at' => $row->created_at ?? now(),
-                    'source_updated_at' => $row->updated_at ?? now(),
-                ],
-                [
-                    'company_name',
-                    'industry',
-                    'company_email',
-                    'phone_no',
-                    'admin_name',
-                    'admin_user_id',
-                    'employee_table_name',
-                    'status',
-                    'source_created_at',
-                    'source_updated_at',
-                ]
-            );
-            $this->info("Synced {$companiesSynced} companies.");
-        } catch (\Throwable $e) {
-            $this->warn('Companies sync failed: ' . $e->getMessage());
-        }
+            $companies = DB::connection('procurement_dept')->table('companies')->get();
+            foreach ($companies as $row) {
+                \App\Models\ProcurementDeptCompany::updateOrCreate(
+                    ['source_id' => $row->id],
+                    ['name' => $row->name ?? '', 'contact' => $row->contact ?? '', 'email' => $row->email ?? '', 'source_created_at' => $row->created_at ?? now(), 'source_updated_at' => $row->updated_at ?? now()]
+                );
+            }
+            $this->info("Synced {$companies->count()} companies.");
+        } catch (\Throwable) { $this->warn('Companies table not available.'); }
 
-        // procurement_dept_requisitions columns match
-        // ProcurementDeptRequisition::$fillable: source_id, req_number, item,
-        // qty, uom, delivery_status, department, requested_by, status,
-        // date_requested, notes, source_created_at, source_updated_at.
+        // Requisitions
         try {
-            $requisitionsSynced = $this->syncTable(
-                'requisitions',
-                ProcurementDeptRequisition::class,
-                fn($row) => [
-                    'source_id' => $row->id,
-                    'req_number' => $row->req_number ?? null,
-                    'item' => $row->item ?? $row->item_name ?? '',
-                    'qty' => $row->qty ?? $row->quantity ?? 0,
-                    'uom' => $row->uom ?? null,
-                    'delivery_status' => $row->delivery_status ?? null,
-                    'department' => $row->department ?? null,
-                    'requested_by' => $row->requested_by ?? null,
-                    'status' => $row->status ?? 'pending',
-                    'date_requested' => $row->date_requested ?? null,
-                    'notes' => $row->notes ?? null,
-                    'source_created_at' => $row->created_at ?? now(),
-                    'source_updated_at' => $row->updated_at ?? now(),
-                ],
-                [
-                    'req_number',
-                    'item',
-                    'qty',
-                    'uom',
-                    'delivery_status',
-                    'department',
-                    'requested_by',
-                    'status',
-                    'date_requested',
-                    'notes',
-                    'source_created_at',
-                    'source_updated_at',
-                ]
-            );
-            $this->info("Synced {$requisitionsSynced} requisitions.");
-        } catch (\Throwable $e) {
-            $this->warn('Requisitions sync failed: ' . $e->getMessage());
-        }
+            $requisitions = DB::connection('procurement_dept')->table('requisitions')->get();
+            foreach ($requisitions as $row) {
+                \App\Models\ProcurementDeptRequisition::updateOrCreate(
+                    ['source_id' => $row->id],
+                    ['item_description' => $row->description ?? $row->item_name ?? '', 'quantity' => $row->quantity ?? 0, 'status' => $row->status ?? 'pending', 'source_created_at' => $row->created_at ?? now(), 'source_updated_at' => $row->updated_at ?? now()]
+                );
+            }
+            $this->info("Synced {$requisitions->count()} requisitions.");
+        } catch (\Throwable) { $this->warn('Requisitions table not available.'); }
 
         $this->info('Procurement sync complete.');
-
         return self::SUCCESS;
-    }
-
-    /**
-     * @param  \Closure(object): array<string, mixed>  $mapRow
-     * @param  array<int, string>  $updateColumns
-     */
-    protected function syncTable(string $sourceTable, string $modelClass, \Closure $mapRow, array $updateColumns): int
-    {
-        $synced = 0;
-
-        DB::connection('procurement_dept')
-            ->table($sourceTable)
-            ->orderBy('id')
-            ->chunk(self::CHUNK_SIZE, function ($rows) use ($mapRow, $modelClass, $updateColumns, &$synced) {
-                $batch = $rows->map($mapRow)->all();
-
-                if ($batch !== []) {
-                    $modelClass::upsert($batch, ['source_id'], $updateColumns);
-                }
-
-                $synced += count($batch);
-            });
-
-        return $synced;
     }
 }

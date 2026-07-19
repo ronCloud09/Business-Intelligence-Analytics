@@ -15,14 +15,12 @@ use App\Http\Controllers\AIController;
 use App\Http\Controllers\AIInsightsController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\SyncController;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 use App\Services\DataService;
-use App\Services\Departments\EcommerceService;
 use App\Services\Departments\FinanceService;
 use App\Services\Departments\InventoryService;
+use App\Services\Departments\SalesService;
 use App\Services\Departments\ManufacturingService;
 use App\Services\Departments\ProcurementService;
 use App\Services\Departments\FulfillmentService;
@@ -59,9 +57,7 @@ Route::get('/api/live-feed', function () {
     if ($lowStock > 0) {
         $critical++;
         $alerts[] = [
-            'severity' => 'critical',
-            'icon' => 'alert-triangle',
-            'department' => 'Inventory',
+            'severity' => 'critical', 'icon' => 'alert-triangle', 'department' => 'Inventory',
             'title' => "{$lowStock} Items Low Stock",
             'description' => 'Stock levels have fallen below reorder thresholds.',
             'timestamp' => $latestTimestamp(InventoryDeptStockLevel::class),
@@ -77,9 +73,7 @@ Route::get('/api/live-feed', function () {
     if ($down > 0) {
         $warning++;
         $alerts[] = [
-            'severity' => 'warning',
-            'icon' => 'cpu',
-            'department' => 'Manufacturing',
+            'severity' => 'warning', 'icon' => 'cpu', 'department' => 'Manufacturing',
             'title' => "{$down} Machines Down",
             'description' => 'Production equipment offline or under maintenance.',
             'timestamp' => $latestTimestamp(ManufacturingMachine::class, 'last_status_change_at'),
@@ -95,9 +89,7 @@ Route::get('/api/live-feed', function () {
     if ($overdue > 0) {
         $critical++;
         $alerts[] = [
-            'severity' => 'critical',
-            'icon' => 'clock-alert',
-            'department' => 'Manufacturing',
+            'severity' => 'critical', 'icon' => 'clock-alert', 'department' => 'Manufacturing',
             'title' => "{$overdue} Overdue Builds",
             'description' => 'Work orders past their due date.',
             'timestamp' => $latestTimestamp(ManufacturingWorkOrder::class),
@@ -113,9 +105,7 @@ Route::get('/api/live-feed', function () {
     if ($openPO > 0) {
         $info++;
         $alerts[] = [
-            'severity' => 'info',
-            'icon' => 'file-text',
-            'department' => 'Procurement',
+            'severity' => 'info', 'icon' => 'file-text', 'department' => 'Procurement',
             'title' => "{$openPO} Open Purchase Orders",
             'description' => 'Active purchase orders awaiting delivery or approval.',
             'timestamp' => $latestTimestamp(ProcurementOrder::class, 'created_at'),
@@ -131,9 +121,7 @@ Route::get('/api/live-feed', function () {
     if ($delayed && $delayed > 0) {
         $warning++;
         $alerts[] = [
-            'severity' => 'warning',
-            'icon' => 'truck',
-            'department' => 'Fulfillment',
+            'severity' => 'warning', 'icon' => 'truck', 'department' => 'Fulfillment',
             'title' => "{$delayed} Delayed Shipments",
             'description' => 'Shipments past their due date.',
             'timestamp' => $latestTimestamp(FulfillmentShipment::class),
@@ -149,9 +137,7 @@ Route::get('/api/live-feed', function () {
     if ($lowPacking > 0) {
         $warning++;
         $alerts[] = [
-            'severity' => 'warning',
-            'icon' => 'box',
-            'department' => 'Fulfillment',
+            'severity' => 'warning', 'icon' => 'box', 'department' => 'Fulfillment',
             'title' => "{$lowPacking} Packing Materials Low",
             'description' => 'Packing supplies below reorder threshold.',
             'timestamp' => $latestTimestamp(FulfillmentPackingMaterial::class),
@@ -167,9 +153,7 @@ Route::get('/api/live-feed', function () {
     if ($openRisks > 0) {
         $critical++;
         $alerts[] = [
-            'severity' => 'critical',
-            'icon' => 'shield',
-            'department' => 'Compliance',
+            'severity' => 'critical', 'icon' => 'shield', 'department' => 'Compliance',
             'title' => "{$openRisks} Open Compliance Risks",
             'description' => 'Active risks requiring review.',
             'timestamp' => $latestTimestamp(ComplianceRisk::class, 'identified_date'),
@@ -185,9 +169,7 @@ Route::get('/api/live-feed', function () {
     if ($openTickets > 0) {
         $info++;
         $alerts[] = [
-            'severity' => 'info',
-            'icon' => 'ticket',
-            'department' => 'ITSM',
+            'severity' => 'info', 'icon' => 'ticket', 'department' => 'ITSM',
             'title' => "{$openTickets} Open Tickets",
             'description' => 'Active IT service tickets requiring attention.',
             'timestamp' => $latestTimestamp(ItsmTicket::class, 'opened_at'),
@@ -203,9 +185,7 @@ Route::get('/api/live-feed', function () {
     if ($overduePayments > 0) {
         $warning++;
         $alerts[] = [
-            'severity' => 'warning',
-            'icon' => 'dollar-sign',
-            'department' => 'Finance',
+            'severity' => 'warning', 'icon' => 'dollar-sign', 'department' => 'Finance',
             'title' => "{$overduePayments} Overdue Invoices",
             'description' => 'Payments past due.',
             'timestamp' => $latestTimestamp(FinanceDeptInvoice::class),
@@ -231,7 +211,6 @@ Route::redirect('/', '/signin')->name('home');
 Route::get('/signin', fn() => view('signIn'))->name('signin');
 Route::get('/contactus', fn() => view('contactus'))->name('contactus');
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-Route::get('/api/sales-forecast', [DashboardController::class, 'salesForecast'])->name('dashboard.sales-forecast');
 Route::get('/ai-insights', [AIInsightsController::class, 'index'])->name('ai-insights');
 Route::get('/live-monitor', fn() => view('live-monitor'))->name('live-monitor');
 
@@ -244,20 +223,16 @@ Route::get('/department-analytics', fn() => view('department-analytics', [
 Route::get('/api/department/{dept}', function ($dept) {
     $financeService = app(FinanceService::class);
     $inventoryService = app(InventoryService::class);
-    $ecommerceService = app(EcommerceService::class);
+    $salesService = app(SalesService::class);
     $manufacturingService = app(ManufacturingService::class);
     $procurementService = app(ProcurementService::class);
     $fulfillmentService = app(FulfillmentService::class);
     $itsmService = app(ItsmService::class);
 
-    return response()->json(match ($dept) {
-        // Note: ecommerce_dept_* is a product catalog, not an orders
-        // ledger — there's no revenue/units-sold data to chart, so
-        // these are catalog-based proxies. See EcommerceService's
-        // docblock for the full explanation.
-        'ecommerce' => array_merge($ecommerceService->getSnapshot(), [
-            'chart1' => ['type' => 'line', 'label' => 'New Listings Value (7d)', 'data' => $ecommerceService->catalogGrowthTrend(7)],
-            'chart2' => ['type' => 'bar', 'label' => 'Top Products by Price', 'data' => collect($ecommerceService->topProducts(5))->map(fn($row) => ['label' => $row['product_name'], 'value' => $row['price']])->toArray()],
+    return response()->json(match($dept) {
+        'ecommerce' => array_merge($salesService->getSnapshot(), [
+            'chart1' => ['type' => 'line', 'label' => 'Revenue Trend (7d)', 'data' => $salesService->revenueTrend(7)],
+            'chart2' => ['type' => 'bar', 'label' => 'Top Products', 'data' => $salesService->topProducts(5)],
         ]),
         'inventory' => array_merge(
             $inventoryService->getSnapshot(),
@@ -278,33 +253,27 @@ Route::get('/api/department/{dept}', function ($dept) {
             $financeService->getSnapshot(),
             [
                 'chart1' => ['type' => 'line', 'label' => 'Revenue Trend (7d)', 'data' => $financeService->revenueTrend(7)],
-                'chart2' => [
-                    'type' => 'doughnut',
-                    'label' => 'Expense Breakdown',
-                    'data' => (function () {
-                            $expenses = DB::table('finance_dept_expenses')->latest('id')->first();
-                            if (!$expenses)
-                                return [];
-                            return [
-                            ['label' => 'Manufacturing', 'value' => (float) ($expenses->manufacturing ?? 0)],
-                            ['label' => 'Procurement', 'value' => (float) ($expenses->procurement ?? 0)],
-                            ['label' => 'Inventory', 'value' => (float) ($expenses->inventory ?? 0)],
-                            ['label' => 'Fulfillment', 'value' => (float) ($expenses->order_fulfillment ?? 0)],
-                            ];
-                        })()
-                ],
-                'expense_summary' => (function () {
-                        $expenses = DB::table('finance_dept_expenses')->latest('id')->first();
-                        if (!$expenses)
-                            return null;
-                        return [
-                        'manufacturing' => (float) ($expenses->manufacturing ?? 0),
-                        'procurement' => (float) ($expenses->procurement ?? 0),
-                        'inventory' => (float) ($expenses->inventory ?? 0),
-                        'order_fulfillment' => (float) ($expenses->order_fulfillment ?? 0),
-                        'total_expenses' => (float) ($expenses->total_expenses ?? 0),
-                        ];
-                    })(),
+                'chart2' => ['type' => 'doughnut', 'label' => 'Expense Breakdown', 'data' => (function() {
+                    $expenses = DB::table('finance_dept_expenses')->latest('id')->first();
+                    if (!$expenses) return [];
+                    return [
+                        ['label' => 'Manufacturing', 'value' => (float)($expenses->manufacturing ?? 0)],
+                        ['label' => 'Procurement', 'value' => (float)($expenses->procurement ?? 0)],
+                        ['label' => 'Inventory', 'value' => (float)($expenses->inventory ?? 0)],
+                        ['label' => 'Fulfillment', 'value' => (float)($expenses->order_fulfillment ?? 0)],
+                    ];
+                })()],
+                'expense_summary' => (function() {
+                    $expenses = DB::table('finance_dept_expenses')->latest('id')->first();
+                    if (!$expenses) return null;
+                    return [
+                        'manufacturing' => (float)($expenses->manufacturing ?? 0),
+                        'procurement' => (float)($expenses->procurement ?? 0),
+                        'inventory' => (float)($expenses->inventory ?? 0),
+                        'order_fulfillment' => (float)($expenses->order_fulfillment ?? 0),
+                        'total_expenses' => (float)($expenses->total_expenses ?? 0),
+                    ];
+                })(),
             ]
         ),
         'fulfillment' => array_merge($fulfillmentService->getSnapshot() ?: ['pending_orders' => $fulfillmentService->pendingOrdersCount()], [
@@ -314,28 +283,20 @@ Route::get('/api/department/{dept}', function ($dept) {
         'itsm' => array_merge(
             $itsmService->getSnapshot(),
             [
-                'chart1' => [
-                    'type' => 'doughnut',
-                    'label' => 'Resolution Status',
-                    'data' => [
-                        ['label' => 'Open', 'value' => $itsmService->openTicketsCount()],
-                        ['label' => 'Resolved', 'value' => max(0, (DB::table('itsm_tickets')->count() ?? 0) - $itsmService->openTicketsCount())],
-                    ]
-                ],
+                'chart1' => ['type' => 'doughnut', 'label' => 'Resolution Status', 'data' => [
+                    ['label' => 'Open', 'value' => $itsmService->openTicketsCount()],
+                    ['label' => 'Resolved', 'value' => max(0, (DB::table('itsm_tickets')->count() ?? 0) - $itsmService->openTicketsCount())],
+                ]],
                 'chart2' => ['type' => 'bar', 'label' => 'Ticket Overview', 'data' => [['label' => 'Open', 'value' => $itsmService->openTicketsCount()], ['label' => 'Critical', 'value' => $itsmService->criticalTicketsCount()]]],
             ]
         ),
         'bi' => array_merge(
             app(BiService::class)->getSnapshot(),
             [
-                'chart1' => [
-                    'type' => 'doughnut',
-                    'label' => 'Department Connections',
-                    'data' => [
-                        ['label' => 'Connected', 'value' => app(BiService::class)->connectedDepartmentsCount()],
-                        ['label' => 'Pending', 'value' => app(BiService::class)->totalDepartmentsCount() - app(BiService::class)->connectedDepartmentsCount()],
-                    ]
-                ],
+                'chart1' => ['type' => 'doughnut', 'label' => 'Department Connections', 'data' => [
+                    ['label' => 'Connected', 'value' => app(BiService::class)->connectedDepartmentsCount()],
+                    ['label' => 'Pending', 'value' => app(BiService::class)->totalDepartmentsCount() - app(BiService::class)->connectedDepartmentsCount()],
+                ]],
                 'chart2' => ['type' => 'bar', 'label' => 'Records by Department', 'data' => collect(app(BiService::class)->recordsByDepartment())->map(fn($count, $dept) => ['label' => $dept, 'value' => $count])->values()->toArray()],
             ]
         ),
@@ -343,10 +304,10 @@ Route::get('/api/department/{dept}', function ($dept) {
     });
 });
 
-Route::post('/api/sync-all', [SyncController::class, 'syncAll'])->name('sync.all');
-
+// Login
 Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login'])->name('login');
 
+// NEXORA AI
 Route::prefix('nexora-ai')->name('ai.')->group(function () {
     Route::get('/current-report', [AIController::class, 'current'])->name('current');
     Route::post('/refresh', [AIController::class, 'refresh'])->name('refresh');

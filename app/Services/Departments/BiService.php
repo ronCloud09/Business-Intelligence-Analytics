@@ -29,8 +29,7 @@ class BiService
                         $connected++;
                         break;
                     }
-                } catch (\Throwable) {
-                }
+                } catch (\Throwable) {}
             }
         }
         return $connected;
@@ -46,10 +45,7 @@ class BiService
         $total = 0;
         foreach ($this->departmentTables() as $tables) {
             foreach ($tables as $table) {
-                try {
-                    $total += DB::table($table)->count();
-                } catch (\Throwable) {
-                }
+                try { $total += DB::table($table)->count(); } catch (\Throwable) {}
             }
         }
         return $total;
@@ -61,10 +57,7 @@ class BiService
         foreach ($this->departmentTables() as $dept => $tables) {
             $total = 0;
             foreach ($tables as $table) {
-                try {
-                    $total += DB::table($table)->count();
-                } catch (\Throwable) {
-                }
+                try { $total += DB::table($table)->count(); } catch (\Throwable) {}
             }
             $counts[$dept] = $total;
         }
@@ -73,26 +66,18 @@ class BiService
 
     public function reportsGeneratedCount(): int
     {
-        try {
-            return AIReport::count();
-        } catch (\Throwable) {
-            return 0;
-        }
+        try { return AIReport::count(); } catch (\Throwable) { return 0; }
     }
 
     public function aiGenerationsCount(): int
     {
-        try {
-            return AIGeneration::count();
-        } catch (\Throwable) {
-            return 0;
-        }
+        try { return AIGeneration::count(); } catch (\Throwable) { return 0; }
     }
 
     private function departmentTables(): array
     {
         return [
-            'E-Commerce' => ['ecommerce_dept_products', 'ecommerce_dept_prebuilt_configs', 'ecommerce_dept_configurator_configs'],
+            'Sales' => ['sales_orders'],
             'Inventory' => ['inventory_dept_items', 'inventory_dept_stock_levels'],
             'Finance' => ['finance_dept_invoices'],
             'Manufacturing' => ['manufacturing_work_orders', 'manufacturing_qc_results', 'manufacturing_machines'],
