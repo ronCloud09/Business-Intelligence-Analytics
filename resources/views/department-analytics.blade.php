@@ -23,21 +23,26 @@
             </div>
         </div>
         <div class="content-container">
-            <div class="dept-top-row">
-                <div class="dept-big-card">
+            {{-- Stats Row --}}
+            <div class="kpi-grid" id="deptStats"></div>
+
+            {{-- Charts + Bottom — unified grid --}}
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="ui-card">
                     <div class="card-header">
                         <div class="card-title" id="deptCard1Title">Trend Overview</div>
                     </div>
                     <div class="placeholder-graph-box chart-box"><canvas id="deptChart1"></canvas></div>
                 </div>
-                <div class="dept-big-card">
+                <div class="ui-card">
                     <div class="card-header">
                         <div class="card-title" id="deptCard2Title">Performance Chart</div>
                     </div>
                     <div class="placeholder-graph-box chart-box"><canvas id="deptChart2"></canvas></div>
                 </div>
-                <div class="dept-stats-col" id="deptStats"></div>
             </div>
+
+            {{-- Bottom Tables --}}
             <div class="dashboard-layout-grid" id="deptBottomRow"></div>
         </div>
     </div>
@@ -95,12 +100,12 @@
             }
 
             return stats.slice(0, 4).map(s => `
-            <div class="dept-stat-card">
-                <div class="dept-stat-icon"><i data-lucide="${s.icon}" class="kpi-icon"></i></div>
-                <div class="dept-stat-info">
+            <div class="kpi-card">
+                <div class="kpi-icon-container"><i data-lucide="${s.icon}" class="kpi-icon"></i></div>
+                <div class="kpi-details">
                     <div class="kpi-label">${s.label}</div>
-                    <div class="kpi-value" style="font-size:16px;">${s.value}</div>
-                    <div class="kpi-change ${s.cls}" style="font-size:10px;">${s.change}</div>
+                    <div class="kpi-value">${s.value}</div>
+                    <div class="kpi-change ${s.cls}">${s.change}</div>
                 </div>
             </div>
         `).join('');
@@ -231,7 +236,7 @@
             const ctx = document.getElementById(canvasId);
             if (!ctx) return null;
 
-            const labels = chartData.data.map(d => {
+            const fullLabels = chartData.data.map(d => {
                 const raw = d.label || d.date || '';
                 if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
                     const date = new Date(raw + 'T00:00:00');
@@ -239,13 +244,14 @@
                 }
                 return raw;
             });
+
             const values = chartData.data.map(d => d.value || d.total || 0);
             const colors = ['#1B6FC8', '#4A9EE8', '#7BBEF0', '#16A34A', '#D97706', '#DC2626', '#0EA5E9', '#EAB308'];
 
             if (chartData.type === 'doughnut') {
                 return new Chart(ctx, {
                     type: 'doughnut',
-                    data: { labels: labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }] },
+                    data: { labels: fullLabels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }] },
                     options: {
                         responsive: true, maintainAspectRatio: false,
                         plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 } } } }
@@ -254,21 +260,54 @@
             }
 
             if (chartData.type === 'bar') {
+                const isHorizontal = chartData.barDirection === 'horizontal';
                 return new Chart(ctx, {
                     type: 'bar',
-                    data: { labels: labels, datasets: [{ data: values, backgroundColor: colors[0], borderRadius: 4, maxBarThickness: 40 }] },
+                    data: { 
+                        labels: fullLabels, 
+                        datasets: [{ 
+                            data: values, 
+                            backgroundColor: colors[0], 
+                            borderRadius: 4, 
+                            maxBarThickness: isHorizontal ? 30 : 40 
+                        }] 
+                    },
                     options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: { y: { beginAtZero: true, grid: { color: '#E2E8F0' } }, x: { grid: { display: false } } }
+                        indexAxis: isHorizontal ? 'y' : 'x',
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return values[context.dataIndex];
+                                    }
+                                }
+                            }
+                        },
+                        scales: { 
+                            x: { beginAtZero: true, grid: { color: '#E2E8F0' } },
+                            y: { 
+                                grid: { display: false },
+                                ticks: { 
+                                    autoSkip: false,
+                                    font: { size: 11 },
+                                    callback: function(value) {
+                                        const label = this.getLabelForValue(value);
+                                        return label.length > 25 ? label.substring(0, 22) + '...' : label;
+                                    }
+                                }
+                            } 
+                        }
                     }
                 });
             }
-
+            
             return new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: labels,
+                    labels: fullLabels,
                     datasets: [{ data: values, borderColor: '#1B6FC8', backgroundColor: 'rgba(27,111,200,0.1)', tension: 0.35, fill: true, pointRadius: 3, pointBackgroundColor: '#1B6FC8' }]
                 },
                 options: {
@@ -278,7 +317,6 @@
                 }
             });
         }
-
         async function switchDepartment() {
             const dept = document.getElementById('deptSelector').value;
 

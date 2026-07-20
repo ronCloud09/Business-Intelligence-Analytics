@@ -257,13 +257,13 @@ Route::get('/api/department/{dept}', function ($dept) {
         // docblock for the full explanation.
         'ecommerce' => array_merge($ecommerceService->getSnapshot(), [
             'chart1' => ['type' => 'line', 'label' => 'New Listings Value (7d)', 'data' => $ecommerceService->catalogGrowthTrend(7)],
-            'chart2' => ['type' => 'bar', 'label' => 'Top Products by Price', 'data' => collect($ecommerceService->topProducts(5))->map(fn($row) => ['label' => $row['product_name'], 'value' => $row['price']])->toArray()],
+            'chart2' => ['type' => 'bar', 'barDirection' => 'horizontal', 'label' => 'Top Products by Price', 'data' => collect($ecommerceService->topProducts(5))->map(fn($row) => ['label' => $row['product_name'], 'value' => $row['price']])->toArray()],
         ]),
         'inventory' => array_merge(
             $inventoryService->getSnapshot(),
             [
                 'chart1' => ['type' => 'doughnut', 'label' => 'Stock by Category', 'data' => DB::table('inventory_dept_items')->join('inventory_dept_categories', 'inventory_dept_items.source_category_id', '=', 'inventory_dept_categories.source_id')->selectRaw("inventory_dept_categories.name as category, COUNT(*) as count")->groupBy('inventory_dept_categories.name')->get()->map(fn($r) => ['label' => $r->category, 'value' => $r->count])->values()->toArray()],
-                'chart2' => ['type' => 'bar', 'label' => 'Stock by Warehouse', 'data' => DB::table('inventory_dept_stock_levels')->join('inventory_dept_warehouses', 'inventory_dept_stock_levels.source_warehouse_id', '=', 'inventory_dept_warehouses.source_id')->selectRaw("inventory_dept_warehouses.name as warehouse, SUM(quantity_on_hand) as total")->groupBy('inventory_dept_warehouses.name')->get()->map(fn($r) => ['label' => $r->warehouse, 'value' => $r->total])->values()->toArray()],
+                'chart2' => ['type' => 'bar', 'barDirection' => 'horizontal', 'label' => 'Stock by Warehouse', 'data' => DB::table('inventory_dept_stock_levels')->join('inventory_dept_warehouses', 'inventory_dept_stock_levels.source_warehouse_id', '=', 'inventory_dept_warehouses.source_id')->selectRaw("inventory_dept_warehouses.name as warehouse, SUM(quantity_on_hand) as total")->groupBy('inventory_dept_warehouses.name')->get()->map(fn($r) => ['label' => $r->warehouse, 'value' => $r->total])->values()->toArray()],
             ]
         ),
         'manufacturing' => array_merge($manufacturingService->getSnapshot(), [
@@ -309,7 +309,7 @@ Route::get('/api/department/{dept}', function ($dept) {
         ),
         'fulfillment' => array_merge($fulfillmentService->getSnapshot() ?: ['pending_orders' => $fulfillmentService->pendingOrdersCount()], [
             'chart1' => ['type' => 'bar', 'label' => 'Fulfillment Overview', 'data' => [['label' => 'Pending Orders', 'value' => $fulfillmentService->pendingOrdersCount()], ['label' => 'Total Orders', 'value' => $fulfillmentService->totalOrdersCount()], ['label' => 'Total Shipments', 'value' => $fulfillmentService->totalShipmentsCount()]]],
-            'chart2' => ['type' => 'bar', 'label' => 'Low Stock Materials', 'data' => collect($fulfillmentService->lowStockPackingMaterials())->map(fn($m) => ['label' => $m['name'], 'value' => $m['stock_qty']])->values()->toArray()],
+            'chart2' => ['type' => 'bar', 'barDirection' => 'horizontal', 'label' => 'Low Stock Materials', 'data' => collect($fulfillmentService->lowStockPackingMaterials())->map(fn($m) => ['label' => $m['name'], 'value' => $m['stock_qty']])->values()->toArray()],
         ]),
         'itsm' => array_merge(
             $itsmService->getSnapshot(),
@@ -336,7 +336,7 @@ Route::get('/api/department/{dept}', function ($dept) {
                         ['label' => 'Pending', 'value' => app(BiService::class)->totalDepartmentsCount() - app(BiService::class)->connectedDepartmentsCount()],
                     ]
                 ],
-                'chart2' => ['type' => 'bar', 'label' => 'Records by Department', 'data' => collect(app(BiService::class)->recordsByDepartment())->map(fn($count, $dept) => ['label' => $dept, 'value' => $count])->values()->toArray()],
+                'chart2' => ['type' => 'bar', 'barDirection' => 'horizontal', 'label' => 'Records by Department', 'data' => collect(app(BiService::class)->recordsByDepartment())->map(fn($count, $dept) => ['label' => $dept, 'value' => $count])->values()->toArray()],
             ]
         ),
         default => ['title' => $dept, 'desc' => 'No data available', 'chart1' => null, 'chart2' => null],
