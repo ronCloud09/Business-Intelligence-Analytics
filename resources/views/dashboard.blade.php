@@ -244,7 +244,7 @@
                             </div>
                         </div>
 
-                        {{-- Key Operational Risks (Renamed to: Alert Feed) --}}
+                        {{-- Alert Feed --}}
                         <div class="op-risks-card" id="opRisksCard">
                             <div class="op-risks-header">
                                 <div class="op-risks-title-row">
@@ -316,13 +316,6 @@
             }
         };
 
-        // ============================================================
-        // KEY OPERATIONAL RISKS (connected to Live Monitor API)
-        // ============================================================
-
-        // ============================================================
-        // TIME AGO HELPER
-        // ============================================================
         function timeAgo(timestamp) {
             const seconds = Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000);
             if (seconds < 10) return 'Just now';
@@ -333,13 +326,12 @@
             if (hours < 24) return hours + 'h ago';
             return Math.floor(hours / 24) + 'd ago';
         }
+
         async function syncAllDepartments() {
             const btn = document.getElementById('syncNowBtn');
             const icon = btn.querySelector('.control-icon');
-
             btn.disabled = true;
             icon.classList.add('spin-icon');
-
             try {
                 const res = await fetch('/api/sync-all', {
                     method: 'POST',
@@ -349,13 +341,9 @@
                     },
                 });
                 const data = await res.json();
-
                 if (!res.ok && res.status !== 207) {
                     throw new Error(data.message || 'Sync failed.');
                 }
-
-                // Reload so KPI cards, charts, and tables pick up the freshly
-                // synced data (their server-side caches were just cleared).
                 window.location.reload();
             } catch (e) {
                 btn.disabled = false;
@@ -364,9 +352,6 @@
             }
         }
 
-        // ============================================================
-        // ALERT FEED
-        // ============================================================
         async function fetchOpRisks() {
             try {
                 const res = await fetch('/api/live-feed');
@@ -378,67 +363,33 @@
         function updateOpRisks(data) {
             const total = data.summary.critical + data.summary.warning + data.summary.info;
             document.getElementById('opRisksTotal').textContent = total + ' Active';
-
             const counts = document.querySelectorAll('#opRisksCounts .op-risk-count-num');
             if (counts[0]) counts[0].textContent = data.summary.critical;
             if (counts[1]) counts[1].textContent = data.summary.warning;
             if (counts[2]) counts[2].textContent = data.summary.info;
-
             const totalSev = total > 0 ? total : 1;
             const bar = document.getElementById('opRisksBar');
             bar.innerHTML = `
-                    <div class="op-severity-seg health-red" style="width:${Math.round((data.summary.critical / totalSev) * 100)}%;"></div>
-                    <div class="op-severity-seg health-orange" style="width:${Math.round((data.summary.warning / totalSev) * 100)}%;"></div>
-                    <div class="op-severity-seg health-blue" style="width:${Math.round((data.summary.info / totalSev) * 100)}%;"></div>`;
-
+                <div class="op-severity-seg health-red" style="width:${Math.round((data.summary.critical / totalSev) * 100)}%;"></div>
+                <div class="op-severity-seg health-orange" style="width:${Math.round((data.summary.warning / totalSev) * 100)}%;"></div>
+                <div class="op-severity-seg health-blue" style="width:${Math.round((data.summary.info / totalSev) * 100)}%;"></div>`;
             document.getElementById('opRisksLegend').innerHTML = `
-                    <span><span class="op-legend-dot health-red"></span>Critical ${Math.round((data.summary.critical / totalSev) * 100)}%</span>
-                    <span><span class="op-legend-dot health-orange"></span>Warning ${Math.round((data.summary.warning / totalSev) * 100)}%</span>
-                    <span><span class="op-legend-dot health-blue"></span>Info ${Math.round((data.summary.info / totalSev) * 100)}%</span>`;
-
+                <span><span class="op-legend-dot health-red"></span>Critical ${Math.round((data.summary.critical / totalSev) * 100)}%</span>
+                <span><span class="op-legend-dot health-orange"></span>Warning ${Math.round((data.summary.warning / totalSev) * 100)}%</span>
+                <span><span class="op-legend-dot health-blue"></span>Info ${Math.round((data.summary.info / totalSev) * 100)}%</span>`;
             const miniGrid = document.getElementById('opRisksMini');
             if (data.alerts && data.alerts.length > 0) {
                 miniGrid.innerHTML = data.alerts.slice(0, 4).map(a => `
-                        <div class="op-risk-mini-card op-risk-mini-${a.severity}">
-                            <div class="op-risk-mini-header">
-                                <span class="op-risk-mini-category">${a.department}</span>
-                                <span class="op-risk-mini-days" data-timestamp="${a.timestamp}">${timeAgo(a.timestamp)}</span>
-                            </div>
-                            <p class="op-risk-mini-issue">${a.title}</p>
-                        </div>`).join('');
+                    <div class="op-risk-mini-card op-risk-mini-${a.severity}">
+                        <div class="op-risk-mini-header">
+                            <span class="op-risk-mini-category">${a.department}</span>
+                            <span class="op-risk-mini-days" data-timestamp="${a.timestamp}">${timeAgo(a.timestamp)}</span>
+                        </div>
+                        <p class="op-risk-mini-issue">${a.title}</p>
+                    </div>`).join('');
             }
         }
 
-        // ============================================================
-        // OPERATIONS SUMMARY — dynamic background & icon
-        // ============================================================
-        function updateOpsSummary() {
-            const card = document.querySelector('.op-summary-card');
-            const icon = card?.querySelector('.op-summary-check');
-            if (!card) return;
-
-            const donutFill = document.querySelector('.op-donut-fill');
-            const healthClass = donutFill ? [...donutFill.classList].find(c => c.startsWith('health-')) : 'health-green';
-
-            card.classList.remove('health-green', 'health-yellow', 'health-orange', 'health-red');
-            card.classList.add(healthClass);
-
-            const icons = {
-                'health-green': 'check-circle',
-                'health-yellow': 'alert-circle',
-                'health-orange': 'alert-triangle',
-                'health-red': 'x-circle'
-            };
-            if (icon) {
-                icon.removeAttribute('data-lucide');
-                icon.setAttribute('data-lucide', icons[healthClass] || 'check-circle');
-                lucide.createIcons();
-            }
-        }
-
-        // ============================================================
-        // HISTORICAL SALES TREND CHART
-        // ============================================================
         function initSalesChart() {
             const ctx = document.getElementById('salesTrendChart');
             if (!ctx) return;
@@ -447,20 +398,37 @@
                 data: {
                     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
                     datasets: [{
-                        label: 'Sales', data: [0, 0, 0, 0, 0, 0, 0],
-                        borderColor: '#1B6FC8', backgroundColor: 'rgba(27,111,200,0.15)',
-                        tension: 0.35, fill: true, pointRadius: 3,
-                        pointBackgroundColor: '#1B6FC8', borderWidth: 2,
+                        label: 'Sales',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        borderColor: '#1B6FC8',
+                        backgroundColor: 'rgba(27,111,200,0.15)',
+                        tension: 0.35,
+                        fill: true,
+                        pointRadius: 3,
+                        pointBackgroundColor: '#1B6FC8',
+                        borderWidth: 2,
                     }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
+                    responsive: true,
+                    maintainAspectRatio: false,
                     interaction: { mode: 'index', intersect: false },
                     plugins: {
                         legend: { display: false },
-                        tooltip: { backgroundColor: '#fff', titleColor: '#0B1E3D', bodyColor: '#0B1E3D', borderColor: '#E2E8F0', borderWidth: 1, cornerRadius: 6, displayColors: false }
+                        tooltip: {
+                            backgroundColor: '#fff',
+                            titleColor: '#0B1E3D',
+                            bodyColor: '#0B1E3D',
+                            borderColor: '#E2E8F0',
+                            borderWidth: 1,
+                            cornerRadius: 6,
+                            displayColors: false
+                        }
                     },
-                    scales: { y: { beginAtZero: true, grid: { color: '#E2E8F0' } }, x: { grid: { display: false } } }
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#E2E8F0' } },
+                        x: { grid: { display: false } }
+                    }
                 },
                 plugins: [verticalLinePlugin]
             });
@@ -475,20 +443,29 @@
                 if (salesTrendChart) {
                     salesTrendChart.data.labels = data.labels;
                     salesTrendChart.data.datasets[0].data = data.sales;
+
+                    if (data.year) {
+                        salesTrendChart.options.plugins.title = {
+                            display: true,
+                            text: data.year.toString(),
+                            position: 'top',
+                            align: 'end',
+                            font: { size: 11 },
+                            color: '#64748B'
+                        };
+                    } else {
+                        salesTrendChart.options.plugins.title = { display: false };
+                    }
+
                     salesTrendChart.update();
                 }
             } catch (e) { }
         }
 
-        // ============================================================
-        // INIT
-        // ============================================================
         document.addEventListener('DOMContentLoaded', () => {
             initSalesChart();
             fetchOpRisks();
-            setInterval(fetchOpRisks, 30000); //30seconds
-
-            // Live ticking timestamps
+            setInterval(fetchOpRisks, 30000);
             setInterval(() => {
                 document.querySelectorAll('.op-risk-mini-days').forEach(el => {
                     const ts = el.getAttribute('data-timestamp');

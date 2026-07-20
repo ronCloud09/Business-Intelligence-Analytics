@@ -26,28 +26,18 @@ class DashboardController extends Controller
     ) {
     }
 
-    /**
-     * Show the Executive Dashboard.
-     *
-     * Every card is computed here from real department services — the
-     * single source of truth shared with the AI aggregators.
-     */
     public function index(): View
     {
-        // Cache the heavy department snapshots for 60 seconds
         $finance = Cache::remember('dashboard_finance_snapshot', 60, fn() => $this->financeService->getSnapshot());
         $inventory = Cache::remember('dashboard_inventory_snapshot', 60, fn() => $this->inventoryService->getSnapshot());
         $topProducts = Cache::remember('dashboard_top_products', 60, fn() => $this->buildTopProducts(10));
 
-        // Total Revenue and Gross Profit are Finance-owned.
         $totalRevenue = $finance['revenue'];
         $grossProfit = $finance['revenue'] - $finance['expenses'];
 
-        // Total Orders and its month-over-month change are Order Fulfillment-owned.
         $totalOrders = Cache::remember('dashboard_fulfillment_total_orders', 60, fn() => $this->fulfillmentService->totalOrdersCount());
         $ordersChangePercent = Cache::remember('dashboard_fulfillment_orders_change', 60, fn() => $this->fulfillmentService->ordersMonthOverMonthChangePercent());
 
-        // Inventory Value stays Inventory-owned (already correctly wired).
         $inventoryValue = $inventory['inventory_value'];
 
         $fulfillmentRate = Cache::remember('dashboard_fulfillment_rate', 60, fn() => $this->fulfillmentService->fulfillmentRatePercent());
@@ -103,12 +93,6 @@ class DashboardController extends Controller
         ]);
     }
 
-    /**
-     * Powers the "Historical Sales Trend" chart (client-side fetch to
-     * `/api/sales-forecast?range=`). Revenue trend is Finance-owned data;
-     * this previously pointed at a route that didn't exist, so the chart
-     * silently stayed at zero.
-     */
     public function salesForecast(Request $request): JsonResponse
     {
         $range = $request->query('range', '7d');
@@ -124,21 +108,42 @@ class DashboardController extends Controller
             fn() => $this->financeService->revenueTrend($days)
         );
 
+        $labels = collect($trend)->map(fn($row) => Carbon::parse($row['date']));
+        $sales = collect($trend)->pluck('total');
+
+        if ($range === '1m') {
+            $weeks = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+            $weeklySales = [0, 0, 0, 0];
+            $labels->each(function ($date, $i) use ($sales, &$weeklySales) {
+                $weekIndex = min((int) floor($i / 7), 3);
+                $weeklySales[$weekIndex] += $sales[$i];
+            });
+            return response()->json([
+                'labels' => $weeks,
+                'sales' => $weeklySales,
+            ]);
+        }
+
+        if ($range === '1y') {
+            $monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            $monthlySales = array_fill(0, 12, 0);
+            $labels->each(function ($date, $i) use ($sales, &$monthlySales) {
+                $monthIndex = (int) $date->format('n') - 1;
+                $monthlySales[$monthIndex] += $sales[$i];
+            });
+            return response()->json([
+                'labels' => $monthNames,
+                'sales' => $monthlySales,
+                'year' => now()->year,
+            ]);
+        }
+
         return response()->json([
-            'labels' => collect($trend)->map(fn($row) => Carbon::parse($row['date'])->format('M d'))->all(),
-            'sales' => collect($trend)->pluck('total')->all(),
+            'labels' => $labels->map(fn($date) => $date->format('D'))->all(),
+            'sales' => $sales->all(),
         ]);
     }
 
-    /**
-     * Builds the "Products Driving Growth" table.
-     *
-     * Product / Units Sold / vs Last 30 Days / Revenue come from Order
-     * Fulfillment (fulfilled orders). Inventory Coverage and Stock Status
-     * come from Inventory, matched to fulfillment's products by name.
-     *
-     * @return array<int, array{name: string, units_sold: int, prev_units: int, revenue: float, coverage: int, stock_status: string, stock_class: string}>
-     */
     protected function buildTopProducts(int $limit = 10): array
     {
         $products = $this->fulfillmentService->topProductsByUnitsSold($limit);
@@ -165,9 +170,6 @@ class DashboardController extends Controller
             ->toArray();
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     protected function buildOperationalEfficiency(): array
     {
         $completionRate = $this->manufacturingService->completionRatePercent();
@@ -193,7 +195,6 @@ class DashboardController extends Controller
             $flfPercent = 0;
         }
 
-        // Aggregate alerts from all departments (same logic as Live Monitor)
         $lowStock = $this->inventoryService->lowStockCount();
         $machinesDown = $this->manufacturingService->machinesDownCount();
         $overdueBuildsRisk = $this->manufacturingService->overdueBuildsCount();
@@ -204,22 +205,18 @@ class DashboardController extends Controller
         $risksBySeverity = $this->complianceService->risksBySeverity();
         $openTickets = $this->itsmService->openTicketsCount();
         $overduePayments = $this->financeService->overduePaymentsCount();
-        $openPOs = 0; // Procurement — add if available
+        $openPOs = 0;
 
-
-        // Critical alerts: low stock + machines down + overdue builds + high severity risks
         $criticalCount = ($lowStock > 0 ? 1 : 0)
             + ($machinesDown > 0 ? 1 : 0)
             + ($overdueBuildsRisk > 0 ? 1 : 0)
             + $highSeverityRisks;
 
-        // Warning alerts: delayed shipments + low packing + other medium issues
         $warningCount = ($delayedShipmentsRisk > 0 ? 1 : 0)
             + ($lowPacking > 0 ? 1 : 0)
             + ($risksBySeverity['medium'] ?? 0)
             + ($overduePayments > 0 ? 1 : 0);
 
-        // Info alerts: open tickets + open POs + remaining
         $infoCount = ($openTickets > 0 ? 1 : 0)
             + ($openPOs > 0 ? 1 : 0);
 
