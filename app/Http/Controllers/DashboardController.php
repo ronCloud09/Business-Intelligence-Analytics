@@ -7,9 +7,11 @@ use App\Services\Departments\FinanceService;
 use App\Services\Departments\FulfillmentService;
 use App\Services\Departments\InventoryService;
 use App\Services\Departments\ManufacturingService;
-use App\Services\Departments\SalesService;
 use App\Services\Departments\ItsmService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
@@ -17,7 +19,6 @@ class DashboardController extends Controller
     public function __construct(
         protected FinanceService $financeService,
         protected InventoryService $inventoryService,
-        protected SalesService $salesService,
         protected ManufacturingService $manufacturingService,
         protected ComplianceService $complianceService,
         protected FulfillmentService $fulfillmentService,
@@ -34,17 +35,22 @@ class DashboardController extends Controller
     public function index(): View
     {
         // Cache the heavy department snapshots for 60 seconds
-        $finance = Cache::remember('dashboard_finance_snapshot', 60, fn () => $this->financeService->getSnapshot());
-        $inventory = Cache::remember('dashboard_inventory_snapshot', 60, fn () => $this->inventoryService->getSnapshot());
-        $sales = Cache::remember('dashboard_sales_snapshot', 60, fn () => $this->salesService->getSnapshot());
-        $topProducts = Cache::remember('dashboard_top_products', 60, fn () => $this->salesService->topProductsDetailed(10));
+        $finance = Cache::remember('dashboard_finance_snapshot', 60, fn() => $this->financeService->getSnapshot());
+        $inventory = Cache::remember('dashboard_inventory_snapshot', 60, fn() => $this->inventoryService->getSnapshot());
+        $topProducts = Cache::remember('dashboard_top_products', 60, fn() => $this->buildTopProducts(10));
 
-        $totalRevenue = $sales['total_revenue'];
+        // Total Revenue and Gross Profit are Finance-owned.
+        $totalRevenue = $finance['revenue'];
         $grossProfit = $finance['revenue'] - $finance['expenses'];
-        $totalOrders = $sales['total_orders'];
+
+        // Total Orders and its month-over-month change are Order Fulfillment-owned.
+        $totalOrders = Cache::remember('dashboard_fulfillment_total_orders', 60, fn() => $this->fulfillmentService->totalOrdersCount());
+        $ordersChangePercent = Cache::remember('dashboard_fulfillment_orders_change', 60, fn() => $this->fulfillmentService->ordersMonthOverMonthChangePercent());
+
+        // Inventory Value stays Inventory-owned (already correctly wired).
         $inventoryValue = $inventory['inventory_value'];
 
-        $fulfillmentRate = Cache::remember('dashboard_fulfillment_rate', 60, fn () => $this->fulfillmentService->fulfillmentRatePercent());
+        $fulfillmentRate = Cache::remember('dashboard_fulfillment_rate', 60, fn() => $this->fulfillmentService->fulfillmentRatePercent());
 
         $kpis = [
             [
@@ -65,8 +71,10 @@ class DashboardController extends Controller
                 'icon' => 'shopping-cart',
                 'label' => 'Orders',
                 'value' => number_format($totalOrders),
-                'change' => '',
-                'change_class' => 'change-up',
+                'change' => $ordersChangePercent !== null
+                    ? ($ordersChangePercent >= 0 ? '↑ ' . $ordersChangePercent . '%' : '↓ ' . abs($ordersChangePercent) . '%')
+                    : '',
+                'change_class' => ($ordersChangePercent !== null && $ordersChangePercent < 0) ? 'change-down' : 'change-up',
             ],
             [
                 'icon' => 'package',
@@ -93,6 +101,68 @@ class DashboardController extends Controller
             'topProducts' => $topProducts,
             'operationalEfficiency' => $operationalEfficiency,
         ]);
+    }
+
+    /**
+     * Powers the "Historical Sales Trend" chart (client-side fetch to
+     * `/api/sales-forecast?range=`). Revenue trend is Finance-owned data;
+     * this previously pointed at a route that didn't exist, so the chart
+     * silently stayed at zero.
+     */
+    public function salesForecast(Request $request): JsonResponse
+    {
+        $range = $request->query('range', '7d');
+        $days = match ($range) {
+            '1m' => 30,
+            '1y' => 365,
+            default => 7,
+        };
+
+        $trend = Cache::remember(
+            "dashboard_revenue_trend_{$days}",
+            60,
+            fn() => $this->financeService->revenueTrend($days)
+        );
+
+        return response()->json([
+            'labels' => collect($trend)->map(fn($row) => Carbon::parse($row['date'])->format('M d'))->all(),
+            'sales' => collect($trend)->pluck('total')->all(),
+        ]);
+    }
+
+    /**
+     * Builds the "Products Driving Growth" table.
+     *
+     * Product / Units Sold / vs Last 30 Days / Revenue come from Order
+     * Fulfillment (fulfilled orders). Inventory Coverage and Stock Status
+     * come from Inventory, matched to fulfillment's products by name.
+     *
+     * @return array<int, array{name: string, units_sold: int, prev_units: int, revenue: float, coverage: int, stock_status: string, stock_class: string}>
+     */
+    protected function buildTopProducts(int $limit = 10): array
+    {
+        $products = $this->fulfillmentService->topProductsByUnitsSold($limit);
+
+        if ($products->isEmpty()) {
+            return [];
+        }
+
+        $productNames = $products->pluck('name')->all();
+
+        $availableStock = $this->inventoryService->availableStockByProductName($productNames);
+        $averageMonthlySales = $this->fulfillmentService->averageMonthlyUnitsSoldByProduct($productNames);
+
+        return $products
+            ->map(function (array $product) use ($availableStock, $averageMonthlySales) {
+                $stock = (float) ($availableStock[$product['name']] ?? 0);
+                $avgSales = (float) ($averageMonthlySales[$product['name']] ?? 0);
+
+                $coverage = $this->inventoryService->inventoryCoverage($stock, $avgSales);
+
+                return array_merge($product, $coverage);
+            })
+            ->values()
+            ->toArray();
     }
 
     /**
@@ -135,23 +205,23 @@ class DashboardController extends Controller
         $openTickets = $this->itsmService->openTicketsCount();
         $overduePayments = $this->financeService->overduePaymentsCount();
         $openPOs = 0; // Procurement — add if available
-        
+
 
         // Critical alerts: low stock + machines down + overdue builds + high severity risks
-        $criticalCount = ($lowStock > 0 ? 1 : 0) 
-                       + ($machinesDown > 0 ? 1 : 0) 
-                       + ($overdueBuildsRisk > 0 ? 1 : 0) 
-                       + $highSeverityRisks;
+        $criticalCount = ($lowStock > 0 ? 1 : 0)
+            + ($machinesDown > 0 ? 1 : 0)
+            + ($overdueBuildsRisk > 0 ? 1 : 0)
+            + $highSeverityRisks;
 
         // Warning alerts: delayed shipments + low packing + other medium issues
-        $warningCount = ($delayedShipmentsRisk > 0 ? 1 : 0) 
-                      + ($lowPacking > 0 ? 1 : 0)
-                      + ($risksBySeverity['medium'] ?? 0)
-                      + ($overduePayments > 0 ? 1 : 0);
+        $warningCount = ($delayedShipmentsRisk > 0 ? 1 : 0)
+            + ($lowPacking > 0 ? 1 : 0)
+            + ($risksBySeverity['medium'] ?? 0)
+            + ($overduePayments > 0 ? 1 : 0);
 
         // Info alerts: open tickets + open POs + remaining
-        $infoCount = ($openTickets > 0 ? 1 : 0) 
-                   + ($openPOs > 0 ? 1 : 0);
+        $infoCount = ($openTickets > 0 ? 1 : 0)
+            + ($openPOs > 0 ? 1 : 0);
 
         $totalAlerts = $criticalCount + $warningCount + $infoCount;
         $totalSeverity = $totalAlerts > 0 ? $totalAlerts : 1;
@@ -163,15 +233,15 @@ class DashboardController extends Controller
 
         $summaryText = $overallHealth >= 80
             ? "Manufacturing is running at {$completionRate}% completion with a {$qualityRate}% QC pass rate. "
-              . ($hasFulfillmentData ? "Fulfillment is at {$fulfillmentRate}% on-time. Overall operations are healthy." : 'Order Fulfillment is pending initial shipments.')
+            . ($hasFulfillmentData ? "Fulfillment is at {$fulfillmentRate}% on-time. Overall operations are healthy." : 'Order Fulfillment is pending initial shipments.')
             : ($overallHealth >= 60
                 ? "Manufacturing is at {$completionRate}% completion. "
-                  . ($hasFulfillmentData ? "Fulfillment is at {$fulfillmentRate}% on-time. Some metrics need attention." : 'Fulfillment data is pending. Manufacturing requires monitoring.')
+                . ($hasFulfillmentData ? "Fulfillment is at {$fulfillmentRate}% on-time. Some metrics need attention." : 'Fulfillment data is pending. Manufacturing requires monitoring.')
                 : ($overallHealth >= 40
                     ? "Manufacturing completion has dropped to {$completionRate}%. "
-                      . ($hasFulfillmentData ? "Fulfillment is at {$fulfillmentRate}%. Several metrics are below targets." : 'Fulfillment data is pending. Manufacturing needs immediate review.')
+                    . ($hasFulfillmentData ? "Fulfillment is at {$fulfillmentRate}%. Several metrics are below targets." : 'Fulfillment data is pending. Manufacturing needs immediate review.')
                     : "Critical: Manufacturing is at {$completionRate}% completion. "
-                      . ($hasFulfillmentData ? "Fulfillment is at {$fulfillmentRate}%. Urgent action required across all operations." : 'Fulfillment data is pending. Manufacturing is in critical state.')));
+                    . ($hasFulfillmentData ? "Fulfillment is at {$fulfillmentRate}%. Urgent action required across all operations." : 'Fulfillment data is pending. Manufacturing is in critical state.')));
 
         return [
             'overall' => [

@@ -29,7 +29,6 @@ class DatabaseSeeder extends Seeder
             ProcurementOrderSeeder::class,
             ComplianceRiskSeeder::class,
             ItsmTicketSeeder::class,
-            SalesOrderSeeder::class,
         ]);
     }
 }
