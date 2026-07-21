@@ -32,6 +32,9 @@ RUN chown -R www-data:www-data /app/storage /app/bootstrap/cache
 
 RUN composer install --no-dev --optimize-autoloader --no-scripts --ignore-platform-reqs 
 
-CMD ["sh", "-c", "php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT"]
-
-CMD ["sh", "-c", "php artisan serve --host=0.0.0.0 --port=$PORT"]
+# No cron/supervisor is installed in this image, so the Laravel scheduler
+# (sync:* commands, cache:warm-dashboard, etc. defined in routes/console.php)
+# never runs unless something calls `schedule:run` on a loop. The background
+# subshell below does that once a minute, same as a standard cron entry
+# would, while the foreground process keeps serving requests.
+CMD ["sh", "-c", "php artisan migrate --force && (while true; do php artisan schedule:run >> /dev/null 2>&1; sleep 60; done &) && php artisan serve --host=0.0.0.0 --port=$PORT"]

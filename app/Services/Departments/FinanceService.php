@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\DB;
 
 class FinanceService
 {
+    protected ?float $revenueCache = null;
+
     public function getSnapshot(): array
     {
         return [
@@ -33,24 +35,23 @@ class FinanceService
 
     public function totalRevenue(): float
     {
-        return (float) FinanceDeptInvoice::sum('paid_amount');
+        return $this->revenueCache ??= (float) FinanceDeptInvoice::sum('paid_amount');
     }
 
     public function totalExpenses(): float
     {
         $expenses = DB::table('finance_dept_expenses')->latest('id')->first();
-        return (float)($expenses->total_expenses ?? 0.0);
+        return (float) ($expenses->total_expenses ?? 0.0);
     }
 
     public function profitMarginPercent(): float
     {
         $invoiced = (float) FinanceDeptInvoice::sum('invoice_amount');
-
         if ($invoiced <= 0) {
             return 0.0;
         }
-
-        return round(($this->totalRevenue() / $invoiced) * 100, 2);
+        $revenue = $this->totalRevenue();
+        return round(($revenue / $invoiced) * 100, 2);
     }
 
     public function overduePaymentsTotal(): float

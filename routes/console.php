@@ -15,7 +15,4 @@ Schedule::command('sync:manufacturing')->everyFifteenMinutes()->withoutOverlappi
 Schedule::command('sync:procurement')->everyFifteenMinutes()->withoutOverlapping()->runInBackground();
 Schedule::command('sync:fulfillment')->everyFifteenMinutes()->withoutOverlapping()->runInBackground();
 Schedule::command('sync:ecommerce')->everyFifteenMinutes()->withoutOverlapping()->runInBackground();
-
-Schedule::job(new GenerateDashboardInsight('scheduler', 'scheduled_12h_refresh'))
-    ->cron('0 */12 * * *')
-    ->withoutOverlapping();
+Schedule::command('cache:warm-dashboard')->everyFifteenMinutes()->withoutOverlapping()->runInBackground();
