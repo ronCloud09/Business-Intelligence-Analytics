@@ -247,6 +247,7 @@
 
             const values = chartData.data.map(d => d.value || d.total || 0);
             const colors = ['#1B6FC8', '#4A9EE8', '#7BBEF0', '#16A34A', '#D97706', '#DC2626', '#0EA5E9', '#EAB308'];
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
 
             if (chartData.type === 'doughnut') {
                 return new Chart(ctx, {
@@ -287,7 +288,7 @@
                             }
                         },
                         scales: { 
-                            x: { beginAtZero: true, grid: { color: '#E2E8F0' } },
+                            x: { beginAtZero: true, grid: { color: isDark ? '#334155' : '#E2E8F0' } },
                             y: { 
                                 grid: { display: false },
                                 ticks: { 
@@ -308,16 +309,36 @@
                 type: 'line',
                 data: {
                     labels: fullLabels,
-                    datasets: [{ data: values, borderColor: '#1B6FC8', backgroundColor: 'rgba(27,111,200,0.1)', tension: 0.35, fill: true, pointRadius: 3, pointBackgroundColor: '#1B6FC8' }]
+                    datasets: [{ 
+                        data: values, 
+                        borderColor: '#1B6FC8', 
+                        backgroundColor: 'rgba(27,111,200,0.1)', 
+                        tension: 0.35, 
+                        fill: true, 
+                        pointRadius: 3, 
+                        pointBackgroundColor: '#1B6FC8' 
+                    }]
                 },
                 options: {
-                    responsive: true, maintainAspectRatio: false,
+                    responsive: true, 
+                    maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, grid: { color: '#E2E8F0' } }, x: { grid: { display: false } } }
+                    scales: { 
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: isDark ? '#334155' : '#E2E8F0' },
+                            border: { display: true, color: isDark ? '#FFFFFF' : '#E2E8F0' }
+                        }, 
+                        x: { 
+                            grid: { display: false },
+                            border: { display: true, color: isDark ? '#FFFFFF' : '#E2E8F0' }
+                        } 
+                    }
                 }
             });
         }
-        async function switchDepartment() {
+
+            async function switchDepartment() {
             const dept = document.getElementById('deptSelector').value;
 
             document.getElementById('deptTitle').textContent = deptNames[dept] || dept;

@@ -1,12 +1,21 @@
 <?php
 
 use App\Services\AI\Providers\GeminiProvider;
+use App\Services\AI\Providers\OpenAIProvider;
 
 return [
 
-    'default' => env('AI_PROVIDER', 'gemini'),
+    'default' => env('AI_PROVIDER', 'openai'),
 
     'providers' => [
+
+        'openai' => [
+            'driver' => OpenAIProvider::class,
+            'api_key' => env('OPENAI_API_KEY'),
+            'model' => env('OPENAI_MODEL', 'gpt-4o'),
+            'base_url' => env('OPENAI_BASE_URL', 'https://api.openai.com/v1'),
+            'timeout' => (int) env('OPENAI_TIMEOUT', 60),
+        ],
 
         'gemini' => [
             'driver' => GeminiProvider::class,

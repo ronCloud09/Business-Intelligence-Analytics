@@ -20,6 +20,9 @@
             <img src="{{ asset('images/Banner Transparent.png') }}" alt="Nexora Logo">
         </a>
         <div class="header-right">
+            <button id="darkModeToggle" class="control-btn" title="Toggle Dark Mode" style="margin-right: 8px;">
+                <i data-lucide="moon" class="control-icon" id="darkModeIcon"></i>
+            </button>
             <div class="header-profile-wrap" id="headerProfileWrap">
                 <button class="header-profile-btn" id="headerProfileBtn">
                     <i data-lucide="user" class="profile-icon"></i>
@@ -378,7 +381,40 @@ async function sendAiMessage(presetMessage) {
         sendBtn.disabled = false;
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
-}</script>
+}
+
+// Dark mode toggle
+const darkToggle = document.getElementById('darkModeToggle');
+const darkIcon = document.getElementById('darkModeIcon');
+
+// Check saved preference
+if (localStorage.getItem('theme') === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    darkIcon.setAttribute('data-lucide', 'sun');
+}
+
+darkToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    if (isDark) {
+        document.documentElement.removeAttribute('data-theme');
+        darkIcon.setAttribute('data-lucide', 'moon');
+        localStorage.setItem('theme', 'light');
+    } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        darkIcon.setAttribute('data-lucide', 'sun');
+        localStorage.setItem('theme', 'dark');
+    }
+    lucide.createIcons();
+});
+
+if (window.salesTrendChart) {
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    salesTrendChart.options.scales.y.border.color = isDark ? '#FFFFFF' : '#E2E8F0';
+    salesTrendChart.options.scales.y.grid.color = isDark ? '#334155' : '#E2E8F0';
+    salesTrendChart.update();
+}
+
+</script>
 
     {{-- 🔍 LOCAL DEBUG: Log query count & load time to browser console --}}
     

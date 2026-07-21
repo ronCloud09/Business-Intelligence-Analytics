@@ -426,7 +426,11 @@
                         }
                     },
                     scales: {
-                        y: { beginAtZero: true, grid: { color: '#E2E8F0' } },
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: '#E2E8F0' },
+                            border: { display: true, color: '#E2E8F0' }
+                        },
                         x: { grid: { display: false } }
                     }
                 },

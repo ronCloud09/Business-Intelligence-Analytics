@@ -19,6 +19,385 @@
     --info: #0EA5E9;
 }
 
+
+/* ============================================================
+   DARK MODE — Complete, every element covered
+============================================================ */
+[data-theme="dark"] {
+    --deep-navy: #E2E8F0;
+    --navy: #0F1923;
+    --navy-mid: #1A2332;
+    --corporate-blue: #60A5FA;
+    --sky-blue: #3B82F6;
+    --light-blue: #93C5FD;
+    --ice-blue: #1A2332;
+    --off-white: #1A2332;
+    --slate-200: #334155;
+    --slate-500: #94A3B8;
+    --white: #243447;
+    --success: #4ADE80;
+    --warning: #FBBF24;
+    --danger: #F87171;
+    --info: #38BDF8;
+}
+
+/* ============================================================
+   BASE
+============================================================ */
+[data-theme="dark"] body {
+    background-color: #1A2332;
+    color: #E2E8F0;
+}
+
+/* ============================================================
+   HEADER & SIDEBAR
+============================================================ */
+[data-theme="dark"] .header {
+    background: #0F1923;
+}
+
+[data-theme="dark"] aside {
+    background-color: #0F1923;
+}
+
+[data-theme="dark"] .nav-item {
+    color: #94A3B8;
+}
+
+[data-theme="dark"] .nav-item:hover {
+    color: #FFFFFF;
+    background-color: #1A2332;
+}
+
+[data-theme="dark"] .nav-item.active {
+    background-color: #3B82F6;
+    color: #FFFFFF;
+}
+
+[data-theme="dark"] .sidebar-footer {
+    border-top-color: #1A2332;
+    color: #94A3B8;
+}
+
+[data-theme="dark"] .header-profile-btn {
+    background: #1A2332;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .header-profile-btn:hover {
+    background: #243447;
+    border-color: #60A5FA;
+}
+
+[data-theme="dark"] .profile-icon {
+    color: #E2E8F0;
+}
+
+[data-theme="dark"] .notification-badge {
+    border-color: #0F1923;
+}
+
+/* ============================================================
+   SUBHEADER & CONTROLS
+============================================================ */
+[data-theme="dark"] .subheader-bar {
+    background-color: #243447;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .control-date-selector,
+[data-theme="dark"] .control-btn {
+    background: #243447;
+    border-color: #334155;
+    color: #E2E8F0;
+}
+
+[data-theme="dark"] .control-btn:hover {
+    background: #334155;
+}
+
+/* ============================================================
+   ALL CARDS
+============================================================ */
+[data-theme="dark"] .kpi-card,
+[data-theme="dark"] .ui-card,
+[data-theme="dark"] .dept-big-card,
+[data-theme="dark"] .dept-stat-card,
+[data-theme="dark"] .op-health-card,
+[data-theme="dark"] .op-dept-full-card,
+[data-theme="dark"] .op-risks-card,
+[data-theme="dark"] .insight-card,
+[data-theme="dark"] .live-summary-item,
+[data-theme="dark"] .live-alert-card,
+[data-theme="dark"] .sub-box,
+[data-theme="dark"] .op-metric-item,
+[data-theme="dark"] .notification-dropdown,
+[data-theme="dark"] .ai-chat-window,
+[data-theme="dark"] .alert-square {
+    background: #243447;
+    border-color: #334155;
+}
+
+/* ============================================================
+   TEXT — LIGHT
+============================================================ */
+[data-theme="dark"] .card-title,
+[data-theme="dark"] .subheader-title h3,
+[data-theme="dark"] .subheader-title p,
+[data-theme="dark"] .kpi-value,
+[data-theme="dark"] .op-health-info h4,
+[data-theme="dark"] .op-donut-text,
+[data-theme="dark"] .op-risk-mini-days,
+[data-theme="dark"] .op-risk-count-num,
+[data-theme="dark"] .live-summary-count,
+[data-theme="dark"] .live-alert-title,
+[data-theme="dark"] .notification-title,
+[data-theme="dark"] .insight-card h3,
+[data-theme="dark"] .insight-text-wrapper p,
+[data-theme="dark"] .coverage-text,
+[data-theme="dark"] .sub-box-val,
+[data-theme="dark"] .op-metric-val,
+[data-theme="dark"] .op-summary-header h4,
+[data-theme="dark"] .op-risk-count-label,
+[data-theme="dark"] .op-severity-label,
+[data-theme="dark"] .op-severity-legend,
+[data-theme="dark"] .op-metric-label,
+[data-theme="dark"] .product-table td strong,
+[data-theme="dark"] .alert-square strong,
+[data-theme="dark"] .live-alert-dept,
+[data-theme="dark"] .live-metric-val,
+[data-theme="dark"] .live-summary-label,
+[data-theme="dark"] .live-alert-desc,
+[data-theme="dark"] .live-metric-label,
+[data-theme="dark"] .alert-square p,
+[data-theme="dark"] .alert-square-time,
+[data-theme="dark"] .op-risk-mini-category,
+[data-theme="dark"] .op-risk-mini-issue {
+    color: #E2E8F0;
+}
+
+[data-theme="dark"] .kpi-label,
+[data-theme="dark"] .notification-desc,
+[data-theme="dark"] .notification-time,
+[data-theme="dark"] .card-subtitle,
+[data-theme="dark"] .op-metric-icon,
+[data-theme="dark"] .dept-stat-info .kpi-label {
+    color: #94A3B8;
+}
+
+/* ============================================================
+   ALERT CARDS — DISTINCT BACKGROUNDS
+============================================================ */
+[data-theme="dark"] .op-risk-count-critical {
+    background: #3B1111;
+}
+
+[data-theme="dark"] .op-risk-count-warning {
+    background: #3B2E0A;
+}
+
+[data-theme="dark"] .op-risk-count-info {
+    background: #1A2332;
+}
+
+[data-theme="dark"] .op-risk-count-critical .op-risk-count-num { color: #F87171; }
+[data-theme="dark"] .op-risk-count-warning .op-risk-count-num { color: #FBBF24; }
+[data-theme="dark"] .op-risk-count-info .op-risk-count-num { color: #60A5FA; }
+
+[data-theme="dark"] .op-risk-mini-card {
+    background: #1E2D3D;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .op-risk-mini-critical { border-left-color: #F87171; background: #2D1B1B; }
+[data-theme="dark"] .op-risk-mini-warning { border-left-color: #FBBF24; background: #2D2610; }
+[data-theme="dark"] .op-risk-mini-info { border-left-color: #60A5FA; background: #1A2332; }
+
+[data-theme="dark"] .live-alert-critical { border-left-color: #F87171; }
+[data-theme="dark"] .live-alert-warning { border-left-color: #FBBF24; }
+[data-theme="dark"] .live-alert-info { border-left-color: #60A5FA; }
+
+/* ============================================================
+   TABLES
+============================================================ */
+[data-theme="dark"] table th {
+    background: #243447;
+    color: #94A3B8;
+}
+
+[data-theme="dark"] tr td {
+    color: #E2E8F0;
+    border-bottom-color: #334155;
+}
+
+[data-theme="dark"] tr:nth-child(even) td {
+    background-color: #1E2D3D;
+}
+
+[data-theme="dark"] .product-table td {
+    border-bottom-color: #334155;
+}
+
+/* ============================================================
+   COVERAGE BAR — visible track
+============================================================ */
+[data-theme="dark"] .coverage-bar {
+    background: #1A2332;
+}
+
+/* ============================================================
+   OPERATIONAL SUMMARY — health colors preserved
+============================================================ */
+[data-theme="dark"] .op-summary-card {
+    background: #243447;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .op-summary-card.health-green { background: #14532D; border-color: #16A34A; }
+[data-theme="dark"] .op-summary-card.health-green p { color: #DCFCE7; }
+[data-theme="dark"] .op-summary-card.health-green .op-summary-check { color: #4ADE80; }
+[data-theme="dark"] .op-summary-card.health-green .op-summary-header h4 { color: #DCFCE7; }
+
+[data-theme="dark"] .op-summary-card.health-yellow { background: #3B2E0A; border-color: #EAB308; }
+[data-theme="dark"] .op-summary-card.health-yellow p { color: #FEF9C3; }
+[data-theme="dark"] .op-summary-card.health-yellow .op-summary-check { color: #FBBF24; }
+[data-theme="dark"] .op-summary-card.health-yellow .op-summary-header h4 { color: #FEF9C3; }
+
+[data-theme="dark"] .op-summary-card.health-orange { background: #3B1F0A; border-color: #D97706; }
+[data-theme="dark"] .op-summary-card.health-orange p { color: #FEF3C7; }
+[data-theme="dark"] .op-summary-card.health-orange .op-summary-check { color: #FBBF24; }
+[data-theme="dark"] .op-summary-card.health-orange .op-summary-header h4 { color: #FEF3C7; }
+
+[data-theme="dark"] .op-summary-card.health-red { background: #3B1111; border-color: #DC2626; }
+[data-theme="dark"] .op-summary-card.health-red p { color: #FEE2E2; }
+[data-theme="dark"] .op-summary-card.health-red .op-summary-check { color: #F87171; }
+[data-theme="dark"] .op-summary-card.health-red .op-summary-header h4 { color: #FEE2E2; }
+
+/* ============================================================
+   CHARTS & CANVAS
+============================================================ */
+[data-theme="dark"] .placeholder-graph-box {
+    background-color: #1A2332;
+    border-color: #334155;
+}
+
+/* ============================================================
+   NOTIFICATIONS
+============================================================ */
+[data-theme="dark"] .notification-dropdown-header {
+    border-color: #334155;
+}
+
+[data-theme="dark"] .notification-dropdown-header h3 {
+    color: #E2E8F0;
+}
+
+[data-theme="dark"] .notification-item {
+    border-bottom-color: #334155;
+}
+
+[data-theme="dark"] .notification-item:hover {
+    background-color: #1E2D3D;
+}
+
+[data-theme="dark"] .notification-item.unread {
+    background-color: #1E2D3D;
+}
+
+[data-theme="dark"] .notification-item.unread:hover {
+    background-color: #334155;
+}
+
+[data-theme="dark"] .notification-mark-read {
+    color: #60A5FA;
+}
+
+[data-theme="dark"] .notification-mark-read:hover {
+    background-color: #1A2332;
+}
+
+/* ============================================================
+   AI CHAT
+============================================================ */
+[data-theme="dark"] .ai-chat-input,
+[data-theme="dark"] .ai-chip {
+    background: #1A2332;
+    border-color: #334155;
+    color: #E2E8F0;
+}
+
+[data-theme="dark"] .ai-chip:hover {
+    background: #243447;
+    border-color: #60A5FA;
+}
+
+[data-theme="dark"] .ai-message-bot .ai-message-content {
+    background: #243447;
+    border-color: #334155;
+    color: #E2E8F0;
+}
+
+[data-theme="dark"] .ai-chat-messages {
+    background: #1A2332;
+}
+
+[data-theme="dark"] .ai-chat-input-container {
+    background: #243447;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .ai-message-avatar {
+    background: #1A2332;
+    color: #60A5FA;
+}
+
+/* ============================================================
+   MISC
+============================================================ */
+[data-theme="dark"] .info-dot {
+    border-color: #94A3B8;
+    color: #94A3B8;
+}
+
+[data-theme="dark"] .info-dot:hover {
+    background-color: #60A5FA;
+    border-color: #60A5FA;
+}
+
+[data-theme="dark"] .view-ai-btn {
+    color: #60A5FA;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .view-ai-btn:hover {
+    background: #1A2332;
+    border-color: #60A5FA;
+}
+
+[data-theme="dark"] .badge.bg-high { background-color: #3B1111; color: #F87171; }
+[data-theme="dark"] .badge.bg-med { background-color: #3B2E0A; color: #FBBF24; }
+[data-theme="dark"] .badge.bg-low { background-color: #14532D; color: #4ADE80; }
+
+[data-theme="dark"] [data-tip]:hover::after {
+    background: #243447;
+    color: #E2E8F0;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .info-dot::after,
+[data-theme="dark"] .info-dot-inline::after {
+    background-color: #243447;
+    color: #E2E8F0;
+    border-color: #334155;
+}
+
+[data-theme="dark"] .info-dot::before,
+[data-theme="dark"] .info-dot-inline::before {
+    border-top-color: #243447;
+}
+
+/* END BLOCK OF DARK MODE CSS */
+
 /* ============================================================
    GLOBAL RESET & BASE
 ============================================================ */
@@ -252,7 +631,22 @@ main { flex-grow: 1; margin-left: clamp(200px, 15vw, 260px); display: flex; flex
 ============================================================ */
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.75rem; flex-shrink: 0; }
 .kpi-card { background: var(--white); border: 1px solid var(--slate-200); border-radius: 10px; padding: clamp(0.75rem, 1vw, 1rem); display: flex; gap: 0.5rem; align-items: center; min-width: 0; }
-.kpi-icon-container { width: clamp(32px, 3vw, 40px); height: clamp(32px, 3vw, 40px); border-radius: 50%; background-color: var(--ice-blue); display: flex; align-items: center; justify-content: center; color: var(--corporate-blue); flex-shrink: 0; }
+.kpi-icon-container { 
+    width: clamp(32px, 3vw, 40px); 
+    height: clamp(32px, 3vw, 40px); 
+    border-radius: 50%; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    flex-shrink: 0; 
+}
+
+.kpi-card:nth-child(1) .kpi-icon-container { background-color: #DCFCE7; color: #16A34A; }
+.kpi-card:nth-child(2) .kpi-icon-container { background-color: #DBEAFE; color: #2563EB; }
+.kpi-card:nth-child(3) .kpi-icon-container { background-color: #FEF3C7; color: #D97706; }
+.kpi-card:nth-child(4) .kpi-icon-container { background-color: #FCE7F3; color: #DB2777; }
+.kpi-card:nth-child(5) .kpi-icon-container { background-color: #EDE9FE; color: #7C3AED; }
+
 .kpi-details { min-width: 0; flex-grow: 1; }
 .kpi-details .kpi-label { font-size: 11px; font-weight: 600; color: var(--slate-500); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kpi-details .kpi-value { font-size: clamp(14px, 1.2vw, 18px); font-weight: 700; color: var(--deep-navy); margin: 2px 0; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
