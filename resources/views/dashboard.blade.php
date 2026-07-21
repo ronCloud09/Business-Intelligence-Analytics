@@ -138,7 +138,7 @@
 
                 <div class="section-column">
                     {{-- Operational Efficiency --}}
-                    <div class="ui-card top-row-card" style="flex:1; min-height:0;">
+                    <div class="ui-card" style="flex: none;">
                         <div class="card-header">
                             <div class="card-title">Operational Efficiency <span class="info-dot"
                                     data-tooltip="Comprehensive overview of operational health, manufacturing, and fulfillment performance.">i</span>
@@ -243,44 +243,44 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        {{-- Alert Feed --}}
-                        <div class="op-risks-card" id="opRisksCard">
-                            <div class="op-risks-header">
-                                <div class="op-risks-title-row">
-                                    <i data-lucide="alert-triangle" class="op-risks-icon"></i>
-                                    <h4>Alert Feed</h4>
-                                    <span class="op-health-badge health-red" id="opRisksTotal">—</span>
-                                </div>
-                                <a href="{{ route('live-monitor') }}" class="view-ai-btn">See All</a>
+                    {{-- Alert Feed – separate card --}}
+                    <div class="ui-card" style="display:flex; flex-direction:column; gap:0.75rem;">
+                        <div class="op-risks-header">
+                            <div class="op-risks-title-row">
+                                <i data-lucide="alert-triangle" class="op-risks-icon"></i>
+                                <h4>Alert Feed</h4>
+                                <span class="op-health-badge" id="opRisksTotal" style="background: var(--slate-200); color: var(--deep-navy);">—</span>
                             </div>
-                            <div class="op-risks-counts" id="opRisksCounts">
-                                <div class="op-risk-count op-risk-count-critical">
-                                    <span class="op-risk-count-num">—</span>
-                                    <span class="op-risk-count-label">Critical</span>
-                                </div>
-                                <div class="op-risk-count op-risk-count-warning">
-                                    <span class="op-risk-count-num">—</span>
-                                    <span class="op-risk-count-label">Warning</span>
-                                </div>
-                                <div class="op-risk-count op-risk-count-info">
-                                    <span class="op-risk-count-num">—</span>
-                                    <span class="op-risk-count-label">Info</span>
-                                </div>
+                            <a href="{{ route('live-monitor') }}" class="view-ai-btn">See All</a>
+                        </div>
+                        <div class="op-risks-counts" id="opRisksCounts">
+                            <div class="op-risk-count op-risk-count-critical">
+                                <span class="op-risk-count-num">—</span>
+                                <span class="op-risk-count-label">Critical</span>
                             </div>
-                            <span class="op-severity-label">Recent</span>
-                            <div class="op-risks-mini-grid" id="opRisksMini"></div>
-                            <div class="op-severity-section">
-                                <div class="op-severity-bar" id="opRisksBar">
-                                    <div class="op-severity-seg health-red" style="width:33%;"></div>
-                                    <div class="op-severity-seg health-orange" style="width:33%;"></div>
-                                    <div class="op-severity-seg health-blue" style="width:34%;"></div>
-                                </div>
-                                <div class="op-severity-legend" id="opRisksLegend">
-                                    <span><span class="op-legend-dot health-red"></span>Critical —%</span>
-                                    <span><span class="op-legend-dot health-orange"></span>Warning —%</span>
-                                    <span><span class="op-legend-dot health-blue"></span>Info —%</span>
-                                </div>
+                            <div class="op-risk-count op-risk-count-warning">
+                                <span class="op-risk-count-num">—</span>
+                                <span class="op-risk-count-label">Warning</span>
+                            </div>
+                            <div class="op-risk-count op-risk-count-info">
+                                <span class="op-risk-count-num">—</span>
+                                <span class="op-risk-count-label">Info</span>
+                            </div>
+                        </div>
+                        <span class="op-severity-label">Recent</span>
+                        <div class="op-risks-mini-grid" id="opRisksMini"></div>
+                        <div class="op-severity-section">
+                            <div class="op-severity-bar" id="opRisksBar">
+                                <div class="op-severity-seg health-red" style="width:33%;"></div>
+                                <div class="op-severity-seg health-orange" style="width:33%;"></div>
+                                <div class="op-severity-seg health-blue" style="width:34%;"></div>
+                            </div>
+                            <div class="op-severity-legend" id="opRisksLegend">
+                                <span><span class="op-legend-dot health-red"></span>Critical —%</span>
+                                <span><span class="op-legend-dot health-orange"></span>Warning —%</span>
+                                <span><span class="op-legend-dot health-blue"></span>Info —%</span>
                             </div>
                         </div>
                     </div>
@@ -379,7 +379,7 @@
                 <span><span class="op-legend-dot health-blue"></span>Info ${Math.round((data.summary.info / totalSev) * 100)}%</span>`;
             const miniGrid = document.getElementById('opRisksMini');
             if (data.alerts && data.alerts.length > 0) {
-                miniGrid.innerHTML = data.alerts.slice(0, 4).map(a => `
+                miniGrid.innerHTML = data.alerts.slice(0, 3).map(a => `
                     <div class="op-risk-mini-card op-risk-mini-${a.severity}">
                         <div class="op-risk-mini-header">
                             <span class="op-risk-mini-category">${a.department}</span>
@@ -429,15 +429,31 @@
                         y: { 
                             beginAtZero: true, 
                             grid: { color: '#E2E8F0' },
-                            border: { display: true, color: '#E2E8F0' }
+                            border: { display: true, color: '#E2E8F0' },
+                            ticks: { precision: 0 },
+                            grace: '10%'
                         },
-                        x: { grid: { display: false } }
+                        x: { 
+                            grid: { display: false },
+                            border: { display: true, color: '#E2E8F0' }
+                        }
                     }
                 },
                 plugins: [verticalLinePlugin]
             });
             changeSalesRange();
-        }
+
+            // Apply dark mode colors if needed
+                if (document.documentElement.getAttribute('data-theme') === 'dark') {
+                    const gridColor = '#64748B';
+                    salesTrendChart.options.scales.y.grid.color = gridColor;
+                    salesTrendChart.options.scales.y.border.color = gridColor;
+                    salesTrendChart.options.scales.x.border.color = gridColor;
+                    salesTrendChart.options.scales.y.ticks.color = '#94A3B8';
+                    salesTrendChart.options.scales.x.ticks.color = '#94A3B8';
+                    salesTrendChart.update();
+                }
+            }
 
         async function changeSalesRange() {
             const range = document.getElementById('salesRange')?.value || '7d';

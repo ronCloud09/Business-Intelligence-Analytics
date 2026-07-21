@@ -224,6 +224,7 @@
 
         let deptChart1 = null;
         let deptChart2 = null;
+        let currentDeptData = null;
 
         function destroyCharts() {
             if (deptChart1) { deptChart1.destroy(); deptChart1 = null; }
@@ -248,6 +249,7 @@
             const values = chartData.data.map(d => d.value || d.total || 0);
             const colors = ['#1B6FC8', '#4A9EE8', '#7BBEF0', '#16A34A', '#D97706', '#DC2626', '#0EA5E9', '#EAB308'];
             const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const gridColor = isDark ? '#64748B' : '#E2E8F0';
 
             if (chartData.type === 'doughnut') {
                 return new Chart(ctx, {
@@ -262,6 +264,9 @@
 
             if (chartData.type === 'bar') {
                 const isHorizontal = chartData.barDirection === 'horizontal';
+                const valueAxis = isHorizontal ? 'x' : 'y';
+                const categoryAxis = isHorizontal ? 'y' : 'x';
+
                 return new Chart(ctx, {
                     type: 'bar',
                     data: { 
@@ -287,9 +292,15 @@
                                 }
                             }
                         },
-                        scales: { 
-                            x: { beginAtZero: true, grid: { color: isDark ? '#334155' : '#E2E8F0' } },
-                            y: { 
+                        scales: {
+                            [valueAxis]: {
+                                beginAtZero: true,
+                                grid: { color: gridColor },
+                                border: { display: true, color: gridColor },
+                                ticks: { precision: 0 },
+                                grace: '10%'
+                            },
+                            [categoryAxis]: {
                                 grid: { display: false },
                                 ticks: { 
                                     autoSkip: false,
@@ -299,7 +310,7 @@
                                         return label.length > 25 ? label.substring(0, 22) + '...' : label;
                                     }
                                 }
-                            } 
+                            }
                         }
                     }
                 });
@@ -326,19 +337,21 @@
                     scales: { 
                         y: { 
                             beginAtZero: true, 
-                            grid: { color: isDark ? '#334155' : '#E2E8F0' },
-                            border: { display: true, color: isDark ? '#FFFFFF' : '#E2E8F0' }
+                            grid: { color: gridColor },
+                            border: { display: true, color: gridColor },
+                            ticks: { precision: 0 },
+                            grace: '10%'
                         }, 
                         x: { 
                             grid: { display: false },
-                            border: { display: true, color: isDark ? '#FFFFFF' : '#E2E8F0' }
+                            border: { display: true, color: gridColor }
                         } 
                     }
                 }
             });
         }
 
-            async function switchDepartment() {
+        async function switchDepartment() {
             const dept = document.getElementById('deptSelector').value;
 
             document.getElementById('deptTitle').textContent = deptNames[dept] || dept;
@@ -350,6 +363,7 @@
             try {
                 const res = await fetch('/api/department/' + dept);
                 const data = await res.json();
+                currentDeptData = data;
 
                 document.getElementById('deptCard1Title').textContent = data.chart1?.label || 'Overview';
                 document.getElementById('deptCard2Title').textContent = data.chart2?.label || 'Breakdown';
@@ -365,6 +379,18 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', () => switchDepartment());    
+        function refreshCharts() {
+            if (!currentDeptData) return;
+            destroyCharts();
+            deptChart1 = renderChart('deptChart1', currentDeptData.chart1);
+            deptChart2 = renderChart('deptChart2', currentDeptData.chart2);
+        }
+
+        // Redraw charts when theme changes
+        window.addEventListener('themechange', () => {
+            refreshCharts();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => switchDepartment());
     </script>
 @endsection
