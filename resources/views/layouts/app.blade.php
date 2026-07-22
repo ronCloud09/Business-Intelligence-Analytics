@@ -39,43 +39,45 @@
         </header>
 
         <div class="app-body">
-            <aside>
-                <div class="nav-menu">
+            <aside id="sidebar">
+                <div class="nav-menu" id="navMenu">
+                    <button id="sidebarToggle" class="nav-item sidebar-toggle-btn" title="Toggle Sidebar">
+                        <div class="nav-item-title">
+                            <i data-lucide="panel-left-close" id="sidebarToggleIcon"></i>
+                            <span class="nav-item-text">Collapse</span>
+                        </div>
+                    </button>
                     <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" data-tooltip="Dashboard">
                         <div class="nav-item-title">
                             <i data-lucide="layout-dashboard" class="nav-icon"></i>
-                            Dashboard
+                            <span class="nav-item-text">Dashboard</span>
                         </div>
                         <div class="nav-item-sub">Executive Overview</div>
                     </a>
                     <a href="{{ route('ai-insights') }}" class="nav-item {{ request()->routeIs('ai-insights') ? 'active' : '' }}" data-tooltip="AI Insights">
                         <div class="nav-item-title">
                             <i data-lucide="brain" class="nav-icon"></i>
-                            AI Insights
+                            <span class="nav-item-text">AI Insights</span>
                         </div>
                         <div class="nav-item-sub">Recommendations</div>
                     </a>
                     <a href="{{ route('department-analytics') }}" class="nav-item {{ request()->routeIs('department-analytics') ? 'active' : '' }}" data-tooltip="Department Analytics">
                         <div class="nav-item-title">
                             <i data-lucide="building-2" class="nav-icon"></i>
-                            Department Analytics
+                            <span class="nav-item-text">Department Analytics</span>
                         </div>
                         <div class="nav-item-sub">KPI Deep Dive</div>
                     </a>
                     <a href="{{ route('live-monitor') }}" class="nav-item {{ request()->routeIs('live-monitor') ? 'active' : '' }}" data-tooltip="Live Monitor">
                         <div class="nav-item-title">
                             <i data-lucide="activity" class="nav-icon"></i>
-                            Live Monitor
+                            <span class="nav-item-text">Live Monitor</span>
                         </div>
                         <div class="nav-item-sub">Real‑time Feed</div>
                     </a>
                 </div>
 
-                {{-- Sidebar footer – classic divider + version + toggle --}}
-                <div class="sidebar-footer">
-                    <i data-lucide="info" class="footer-icon"></i>
-                    <span>NEXORA BI v1.0.0</span>
-                    
+                <div class="sidebar-footer" id="sidebarFooter">
                     <div class="theme-switch-wrapper">
                         <i data-lucide="sun" class="theme-switch-icon"></i>
                         <label class="theme-switch">
@@ -83,6 +85,9 @@
                             <span class="theme-switch-slider"></span>
                         </label>
                         <i data-lucide="moon" class="theme-switch-icon"></i>
+                    </div>
+                    <div class="sidebar-version">
+                        <span>NEXORA BI v1.0</span>
                     </div>
                 </div>
             </aside>
@@ -164,6 +169,29 @@
                 if (!profileWrap.contains(e.target)) {
                     dropdown.classList.remove('active');
                 }
+            });
+
+            // ============================================================
+            // COLLAPSIBLE SIDEBAR
+            // ============================================================
+            const sidebar = document.getElementById('sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarToggleIcon = document.getElementById('sidebarToggleIcon');
+            const navMenu = document.getElementById('navMenu');
+            const sidebarFooter = document.getElementById('sidebarFooter');
+
+            // Load saved state
+            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                sidebar.classList.add('collapsed');
+                sidebarToggleIcon.setAttribute('data-lucide', 'panel-left-open');
+            }
+
+            sidebarToggle.addEventListener('click', () => {
+                sidebar.classList.toggle('collapsed');
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', isCollapsed);
+                sidebarToggleIcon.setAttribute('data-lucide', isCollapsed ? 'panel-left-open' : 'panel-left-close');
+                lucide.createIcons();
             });
 
             // Handle clicking individual notifications
