@@ -9,10 +9,10 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('sync:finance')->everyFifteenMinutes()->withoutOverlapping()->runInBackground();
-Schedule::command('sync:inventory')->everyFifteenMinutes()->withoutOverlapping()->runInBackground();
-Schedule::command('sync:manufacturing')->everyFifteenMinutes()->withoutOverlapping()->runInBackground();
-Schedule::command('sync:procurement')->everyFifteenMinutes()->withoutOverlapping()->runInBackground();
-Schedule::command('sync:fulfillment')->everyFifteenMinutes()->withoutOverlapping()->runInBackground();
-Schedule::command('sync:ecommerce')->everyFifteenMinutes()->withoutOverlapping()->runInBackground();
-Schedule::command('cache:warm-dashboard')->everyFifteenMinutes()->withoutOverlapping()->runInBackground();
+Schedule::command('sync:finance')->everyMinute()->withoutOverlapping()->runInBackground();
+Schedule::command('sync:inventory')->everyMinute()->withoutOverlapping()->runInBackground();
+Schedule::command('sync:manufacturing')->everyMinute()->withoutOverlapping()->runInBackground();
+Schedule::command('sync:procurement')->everyMinute()->withoutOverlapping()->runInBackground();
+Schedule::command('sync:fulfillment')->everyMinute()->withoutOverlapping()->runInBackground();
+Schedule::command('sync:ecommerce')->everyMinute()->withoutOverlapping()->runInBackground();
+Schedule::command('cache:warm-dashboard')->everyMinute()->withoutOverlapping()->runInBackground();

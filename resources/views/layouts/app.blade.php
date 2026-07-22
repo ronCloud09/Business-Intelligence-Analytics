@@ -1,134 +1,155 @@
-    {{-- ROOT APP.BLADE --}}
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Nexora - BI Hub</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-        <script src="https://unpkg.com/lucide@latest"></script>
-        @vite(['resources/css/app.css', 'resources/css/dashboard.css'])
-        <link rel="icon" type="image/png" href="{{ asset('images/Nexora_Logo_Transparent.png') }}">
-    </head>
-    <body>
-        <header class="header">
-            <a href="{{ route('signin') }}" class="nexora-logo" id="headerLogoBtn">
-                <img src="{{ asset('images/Banner Transparent.png') }}" alt="Nexora Logo">
-            </a>
-            <div class="header-right">
-                <div class="header-profile-wrap" id="headerProfileWrap">
-                    <button class="header-profile-btn" id="headerProfileBtn">
-                        <i data-lucide="user" class="profile-icon"></i>
-                        <span class="notification-badge" id="notificationBadge">0</span>
-                    </button>
-                    <div class="notification-dropdown" id="notificationDropdown">
-                        <div class="notification-dropdown-header">
-                            <h3>Notifications</h3>
-                            <button class="notification-mark-read" onclick="markAllRead()">Mark all as read</button>
-                        </div>
-                        <div class="notification-list" id="notificationList">
-                            <p style="text-align:center;color:var(--slate-500);padding:2rem;font-size:11px;">Loading notifications…</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </header>
+{{-- ROOT APP.BLADE --}}
+<!DOCTYPE html>
+<html lang="en">
 
-        <div class="app-body">
-            <aside>
-                <div class="nav-menu">
-                    <a href="{{ route('dashboard') }}" class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" data-tooltip="Dashboard">
-                        <div class="nav-item-title">
-                            <i data-lucide="layout-dashboard" class="nav-icon"></i>
-                            Dashboard
-                        </div>
-                        <div class="nav-item-sub">Executive Overview</div>
-                    </a>
-                    <a href="{{ route('ai-insights') }}" class="nav-item {{ request()->routeIs('ai-insights') ? 'active' : '' }}" data-tooltip="AI Insights">
-                        <div class="nav-item-title">
-                            <i data-lucide="brain" class="nav-icon"></i>
-                            AI Insights
-                        </div>
-                        <div class="nav-item-sub">Recommendations</div>
-                    </a>
-                    <a href="{{ route('department-analytics') }}" class="nav-item {{ request()->routeIs('department-analytics') ? 'active' : '' }}" data-tooltip="Department Analytics">
-                        <div class="nav-item-title">
-                            <i data-lucide="building-2" class="nav-icon"></i>
-                            Department Analytics
-                        </div>
-                        <div class="nav-item-sub">KPI Deep Dive</div>
-                    </a>
-                    <a href="{{ route('live-monitor') }}" class="nav-item {{ request()->routeIs('live-monitor') ? 'active' : '' }}" data-tooltip="Live Monitor">
-                        <div class="nav-item-title">
-                            <i data-lucide="activity" class="nav-icon"></i>
-                            Live Monitor
-                        </div>
-                        <div class="nav-item-sub">Real‑time Feed</div>
-                    </a>
-                </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexora - BI Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    @vite(['resources/css/app.css', 'resources/css/dashboard.css'])
+    <link rel="icon" type="image/png" href="{{ asset('images/Nexora_Logo_Transparent.png') }}">
+</head>
 
-                {{-- Sidebar footer – classic divider + version + toggle --}}
-                <div class="sidebar-footer">
-                    <i data-lucide="info" class="footer-icon"></i>
-                    <span>NEXORA BI v1.0.0</span>
-                    
-                    <div class="theme-switch-wrapper">
-                        <i data-lucide="sun" class="theme-switch-icon"></i>
-                        <label class="theme-switch">
-                            <input type="checkbox" id="themeSwitchCheckbox">
-                            <span class="theme-switch-slider"></span>
-                        </label>
-                        <i data-lucide="moon" class="theme-switch-icon"></i>
+<body>
+    <header class="header">
+        <a href="{{ route('signin') }}" class="nexora-logo" id="headerLogoBtn">
+            <img src="{{ asset('images/Banner Transparent.png') }}" alt="Nexora Logo">
+        </a>
+        <div class="header-right">
+            <div class="header-profile-wrap" id="headerProfileWrap">
+                <button class="header-profile-btn" id="headerProfileBtn">
+                    <i data-lucide="user" class="profile-icon"></i>
+                    <span class="notification-badge" id="notificationBadge">0</span>
+                </button>
+                <div class="notification-dropdown" id="notificationDropdown">
+                    <div class="notification-dropdown-header">
+                        <h3>Notifications</h3>
+                        <button class="notification-mark-read" onclick="markAllRead()">Mark all as read</button>
                     </div>
-                </div>
-            </aside>
-            <main>
-                @yield('content')
-            </main>
-        </div>
-
-        <!-- Floating AI Chat Bot -->
-        <div class="ai-chat-bot" id="aiChatBot">
-            <button class="ai-chat-toggle" id="aiChatToggle" title="NEXORA AI Business Analyst">
-                <img src="{{ asset('images/Nexora_Logo_Transparent.png') }}" class="chat-toggle-logo" alt="Nexora">
-            </button>
-            <div class="ai-chat-window" id="aiChatWindow">
-                <div class="ai-chat-header">
-                    <div class="ai-chat-header-left">
-                        <img src="{{ asset('images/Nexora_Logo_Transparent.png') }}" class="chat-header-logo" alt="Nexora">
-                        <div>
-                            <h4>NEXORA AI Business Analyst</h4>
-                            <p>Ask me anything about your business</p>
-                        </div>
-                    </div>
-                    <button class="ai-chat-close" id="aiChatClose"><i data-lucide="x" class="chat-close-icon"></i></button>
-                </div>
-                <div class="ai-chat-messages" id="aiChatMessages">
-                    <div class="ai-message ai-message-bot">
-                        <div class="ai-message-avatar"><img src="{{ asset('images/Nexora_Logo_Transparent.png') }}" class="msg-avatar-logo" alt="Nexora"></div>
-                        <div class="ai-message-content"><p>Hello! I'm your NEXORA AI Business Analyst. Since NEXORA BI gathers data across enterprise modules, I can help you transform data into actionable insights. What would you like to know?</p></div>
-                    </div>
-                </div>
-                <div class="ai-chat-input-container">
-                    <div class="ai-suggestion-chips" id="aiSuggestionChips">
-                        <button class="ai-chip" onclick="sendAiMessage('Give me a summary of overall business performance.')">Business summary</button>
-                        <button class="ai-chip" onclick="sendAiMessage('Explain insights from this week\'s activity.')">Weekly insights</button>
-                        <button class="ai-chip" onclick="sendAiMessage('What are the top risks I should be aware of?')">Risk alerts</button>
-                        <button class="ai-chip" onclick="sendAiMessage('Show me revenue trends and forecast.')">Revenue forecast</button>
-                    </div>
-                    <div class="ai-chat-input-row">
-                        <input type="text" class="ai-chat-input" id="aiChatInput" placeholder="Type your question here..." onkeypress="handleAiChatKeypress(event)">
-                        <button class="ai-chat-send" id="aiChatSend" onclick="sendAiMessage()"><i data-lucide="send" class="send-icon"></i></button>
+                    <div class="notification-list" id="notificationList">
+                        <p style="text-align:center;color:var(--slate-500);padding:2rem;font-size:11px;">Loading
+                            notifications…</p>
                     </div>
                 </div>
             </div>
         </div>
+    </header>
 
-        <script>
+    <div class="app-body">
+        <aside>
+            <div class="nav-menu">
+                <a href="{{ route('dashboard') }}"
+                    class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}" data-tooltip="Dashboard">
+                    <div class="nav-item-title">
+                        <i data-lucide="layout-dashboard" class="nav-icon"></i>
+                        Dashboard
+                    </div>
+                    <div class="nav-item-sub">Executive Overview</div>
+                </a>
+                <a href="{{ route('ai-insights') }}"
+                    class="nav-item {{ request()->routeIs('ai-insights') ? 'active' : '' }}" data-tooltip="AI Insights">
+                    <div class="nav-item-title">
+                        <i data-lucide="brain" class="nav-icon"></i>
+                        AI Insights
+                    </div>
+                    <div class="nav-item-sub">Recommendations</div>
+                </a>
+                <a href="{{ route('department-analytics') }}"
+                    class="nav-item {{ request()->routeIs('department-analytics') ? 'active' : '' }}"
+                    data-tooltip="Department Analytics">
+                    <div class="nav-item-title">
+                        <i data-lucide="building-2" class="nav-icon"></i>
+                        Department Analytics
+                    </div>
+                    <div class="nav-item-sub">KPI Deep Dive</div>
+                </a>
+                <a href="{{ route('live-monitor') }}"
+                    class="nav-item {{ request()->routeIs('live-monitor') ? 'active' : '' }}"
+                    data-tooltip="Live Monitor">
+                    <div class="nav-item-title">
+                        <i data-lucide="activity" class="nav-icon"></i>
+                        Live Monitor
+                    </div>
+                    <div class="nav-item-sub">Real‑time Feed</div>
+                </a>
+            </div>
+
+            {{-- Sidebar footer – classic divider + version + toggle --}}
+            <div class="sidebar-footer">
+                <i data-lucide="info" class="footer-icon"></i>
+                <span>NEXORA BI v1.0.0</span>
+
+                <div class="theme-switch-wrapper">
+                    <i data-lucide="sun" class="theme-switch-icon"></i>
+                    <label class="theme-switch">
+                        <input type="checkbox" id="themeSwitchCheckbox">
+                        <span class="theme-switch-slider"></span>
+                    </label>
+                    <i data-lucide="moon" class="theme-switch-icon"></i>
+                </div>
+            </div>
+        </aside>
+        <main>
+            @yield('content')
+        </main>
+    </div>
+
+    <!-- Floating AI Chat Bot -->
+    <div class="ai-chat-bot" id="aiChatBot">
+        <button class="ai-chat-toggle" id="aiChatToggle" title="NEXORA AI Business Analyst">
+            <img src="{{ asset('images/Nexora_Logo_Transparent.png') }}" class="chat-toggle-logo" alt="Nexora">
+        </button>
+        <div class="ai-chat-window" id="aiChatWindow">
+            <div class="ai-chat-header">
+                <div class="ai-chat-header-left">
+                    <img src="{{ asset('images/Nexora_Logo_Transparent.png') }}" class="chat-header-logo" alt="Nexora">
+                    <div>
+                        <h4>NEXORA AI Business Analyst</h4>
+                        <p>Ask me anything about your business</p>
+                    </div>
+                </div>
+                <button class="ai-chat-close" id="aiChatClose"><i data-lucide="x" class="chat-close-icon"></i></button>
+            </div>
+            <div class="ai-chat-messages" id="aiChatMessages">
+                <div class="ai-message ai-message-bot">
+                    <div class="ai-message-avatar"><img src="{{ asset('images/Nexora_Logo_Transparent.png') }}"
+                            class="msg-avatar-logo" alt="Nexora"></div>
+                    <div class="ai-message-content">
+                        <p>Hello! I'm your NEXORA AI Business Analyst. Since NEXORA BI gathers data across enterprise
+                            modules, I can help you transform data into actionable insights. What would you like to
+                            know?</p>
+                    </div>
+                </div>
+            </div>
+            <div class="ai-chat-input-container">
+                <div class="ai-suggestion-chips" id="aiSuggestionChips">
+                    <button class="ai-chip"
+                        onclick="sendAiMessage('Give me a summary of overall business performance.')">Business
+                        summary</button>
+                    <button class="ai-chip"
+                        onclick="sendAiMessage('Explain insights from this week\'s activity.')">Weekly insights</button>
+                    <button class="ai-chip" onclick="sendAiMessage('What are the top risks I should be aware of?')">Risk
+                        alerts</button>
+                    <button class="ai-chip" onclick="sendAiMessage('Show me revenue trends and forecast.')">Revenue
+                        forecast</button>
+                </div>
+                <div class="ai-chat-input-row">
+                    <input type="text" class="ai-chat-input" id="aiChatInput" placeholder="Type your question here..."
+                        onkeypress="handleAiChatKeypress(event)">
+                    <button class="ai-chat-send" id="aiChatSend" onclick="sendAiMessage()"><i data-lucide="send"
+                            class="send-icon"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
         console.log("APP.BLADE VERSION 4 — FIXED NOTIFICATIONS");
 
         lucide.createIcons();
@@ -170,7 +191,7 @@
             dropdown.addEventListener('click', (e) => {
                 const notifItem = e.target.closest('.notification-item');
                 if (!notifItem) return;
-                
+
                 const alertId = notifItem.getAttribute('data-alert-id');
                 if (alertId && !readAlertIds.includes(alertId)) {
                     readAlertIds.push(alertId);
@@ -199,7 +220,7 @@
                 const res = await fetch('/api/live-feed');
                 const data = await res.json();
                 renderNotifications(data.alerts || []);
-            } catch(e) {
+            } catch (e) {
                 console.error('Notification fetch error:', e);
             }
         }
@@ -207,14 +228,14 @@
         function renderNotifications(alerts) {
             const container = document.getElementById('notificationList');
             if (!container) return;
-            
+
             if (alerts.length === 0) {
                 container.innerHTML = '<p style="text-align:center;color:var(--slate-500);padding:2rem;font-size:11px;">All clear — no alerts</p>';
                 currentAlertCount = 0;
                 updateNotificationBadge(0);
                 return;
             }
-            
+
             const iconMap = {
                 'alert-triangle': 'bg-icon-red',
                 'alert-circle': 'bg-icon-orange',
@@ -227,7 +248,7 @@
                 'ticket': 'bg-icon-blue',
                 'dollar-sign': 'bg-icon-orange',
             };
-            
+
             const timeAgo = (timestamp) => {
                 const seconds = Math.floor((Date.now() - new Date(timestamp).getTime()) / 1000);
                 if (seconds < 10) return 'Just now';
@@ -238,7 +259,7 @@
                 if (hours < 24) return hours + 'h ago';
                 return Math.floor(hours / 24) + 'd ago';
             };
-            
+
             container.innerHTML = alerts.slice(0, 5).map(a => {
                 const alertId = a.id ? String(a.id) : a.title.replace(/\s+/g, '-').toLowerCase();
                 const isRead = readAlertIds.includes(alertId);
@@ -255,7 +276,7 @@
                     </div>
                 </div>
             `}).join('');
-            
+
             // Count unread
             currentAlertCount = document.querySelectorAll('#notificationList .notification-item.unread').length;
             updateNotificationBadge(currentAlertCount);
@@ -426,10 +447,10 @@
             }
         });
 
-</script>
+    </script>
 
-        {{-- Local debug (dev only) --}}
-        @if(app()->environment('local'))
+    {{-- Local debug (dev only) --}}
+    @if(app()->environment('local'))
         <script>
             document.addEventListener('DOMContentLoaded', function () {
                 const queries = @json(DB::getQueryLog());
@@ -440,8 +461,9 @@
                 console.table(queries.map(q => ({ query: q.query.substring(0, 100) + (q.query.length > 100 ? '...' : ''), time: q.time + 'ms' })));
             });
         </script>
-        @endif
+    @endif
 
-        @yield('scripts')
-    </body>
-    </html>
+    @yield('scripts')
+</body>
+
+</html>

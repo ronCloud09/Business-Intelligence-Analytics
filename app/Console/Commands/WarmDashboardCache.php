@@ -20,7 +20,7 @@ class WarmDashboardCache extends Command
 
     protected $description = 'Pre-compute dashboard + department analytics snapshots so page loads read cache instead of hitting the DB live';
 
-    protected const TTL_SECONDS = 900; // 15 min — matches the sync schedule
+    protected const TTL_SECONDS = 60;
 
     public function handle(
         FinanceService $finance,
