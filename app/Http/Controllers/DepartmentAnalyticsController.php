@@ -10,6 +10,7 @@ use App\Services\Departments\ItsmService;
 use App\Services\Departments\ManufacturingService;
 use App\Services\Departments\ProcurementService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Cache;
 
 class DepartmentAnalyticsController extends Controller
 {
@@ -24,16 +25,6 @@ class DepartmentAnalyticsController extends Controller
     ) {
     }
 
-    /**
-     * Show Department Analytics.
-     *
-     * Builds the same `deptData` shape the page's JS previously hardcoded,
-     * but now sourced from the real department services. Departments that
-     * don't have a module yet (Business Intelligence, Order Fulfillment,
-     * Human Resources) are left out here; the view's existing fallback
-     * logic keeps showing placeholder data for those tabs until Packages
-     * beyond this scope add them.
-     */
     public function index(): View
     {
         return view('department-analytics', [
@@ -53,7 +44,7 @@ class DepartmentAnalyticsController extends Controller
      */
     protected function financeTab(): array
     {
-        $finance = $this->financeService->getSnapshot();
+        $finance = Cache::remember('deptanalytics_finance', 60, fn() => $this->financeService->getSnapshot());
 
         return [
             'title' => 'Finance & Accounting',
@@ -84,7 +75,7 @@ class DepartmentAnalyticsController extends Controller
      */
     protected function inventoryTab(): array
     {
-        $inventory = $this->inventoryService->getSnapshot();
+        $inventory = Cache::remember('deptanalytics_inventory', 60, fn() => $this->inventoryService->getSnapshot());
 
         return [
             'title' => 'Inventory & Warehouse',
@@ -115,7 +106,7 @@ class DepartmentAnalyticsController extends Controller
      */
     protected function manufacturingTab(): array
     {
-        $manufacturing = $this->manufacturingService->getSnapshot();
+        $manufacturing = Cache::remember('deptanalytics_manufacturing', 60, fn() => $this->manufacturingService->getSnapshot());
         $statusBreakdown = $manufacturing['machine_status'];
 
         return [
@@ -148,7 +139,7 @@ class DepartmentAnalyticsController extends Controller
      */
     protected function procurementTab(): array
     {
-        $procurement = $this->procurementService->getSnapshot();
+        $procurement = Cache::remember('deptanalytics_procurement', 60, fn() => $this->procurementService->getSnapshot());
 
         return [
             'title' => 'Procurement',
@@ -179,8 +170,8 @@ class DepartmentAnalyticsController extends Controller
      */
     protected function itsmTab(): array
     {
-        $itsm = $this->itsmService->getSnapshot();
-        $compliance = $this->complianceService->getSnapshot();
+        $itsm = Cache::remember('deptanalytics_itsm', 60, fn() => $this->itsmService->getSnapshot());
+        $compliance = Cache::remember('deptanalytics_compliance', 60, fn() => $this->complianceService->getSnapshot());
 
         return [
             'title' => 'ITSM, Compliance & Risk Management',
@@ -228,7 +219,7 @@ class DepartmentAnalyticsController extends Controller
      */
     protected function ecommerceTab(): array
     {
-        $ecommerce = $this->ecommerceService->getSnapshot();
+        $ecommerce = Cache::remember('deptanalytics_ecommerce', 60, fn() => $this->ecommerceService->getSnapshot());
 
         return [
             'title' => 'E-Commerce & CRM',
