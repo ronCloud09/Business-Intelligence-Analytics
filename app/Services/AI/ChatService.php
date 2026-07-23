@@ -33,32 +33,38 @@ class ChatService
         string $message,
         ?int $userId = null
     ): array {
-        AIConversation::create([
-            'session_id' => $sessionId,
-            'user_id' => $userId,
-            'role' => 'user',
-            'message' => $message,
-            'used_ai' => false,
-        ]);
-
-        $dbAnswer = $this->tryDatabaseLookup($message);
-
-        if ($dbAnswer !== null) {
-            $this->storeAssistantReply(
-                $sessionId,
-                $userId,
-                $dbAnswer,
-                usedAi: false
-            );
-
-            return [
-                'message' => $dbAnswer,
-                'used_ai' => false,
-            ];
-        }
-
+        // FIX: this write used to run unguarded, before the try/catch
+        // further down. A DB hiccup here (connection drop, missing
+        // table, etc.) threw straight up to the controller as a raw
+        // 500, bypassing the graceful "temporarily unavailable"
+        // fallback that the rest of this method already has. It's now
+        // inside the same try/catch as the AI call.
         try {
-            $answer = $this->askGemini($message);
+            AIConversation::create([
+                'session_id' => $sessionId,
+                'user_id' => $userId,
+                'role' => 'user',
+                'message' => $message,
+                'used_ai' => false,
+            ]);
+
+            $dbAnswer = $this->tryDatabaseLookup($message);
+
+            if ($dbAnswer !== null) {
+                $this->storeAssistantReply(
+                    $sessionId,
+                    $userId,
+                    $dbAnswer,
+                    usedAi: false
+                );
+
+                return [
+                    'message' => $dbAnswer,
+                    'used_ai' => false,
+                ];
+            }
+
+            $answer = $this->askAI($message);
 
             $this->storeAssistantReply(
                 $sessionId,
@@ -510,7 +516,13 @@ class ChatService
         return null;
     }
 
-    protected function askGemini(string $message): string
+    /**
+     * Sends the chat prompt through AIRouter, which resolves to whichever
+     * provider AI_PROVIDER is set to in .env (gemini or openai). Renamed
+     * from askGemini() — this was hardcoded-sounding but never actually
+     * tied to Gemini specifically; it always went through the router.
+     */
+    protected function askAI(string $message): string
     {
         $context = $this->reportGenerator->getCurrentReport() ?? [
             'note' => 'No AI report has been generated yet.',

@@ -13,7 +13,6 @@ use App\Models\FinanceDeptInvoice;
 use App\Http\Controllers\AIChatController;
 use App\Http\Controllers\AIController;
 use App\Http\Controllers\AIInsightsController;
-use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SyncController;
 use Illuminate\Support\Facades\DB;
@@ -347,7 +346,13 @@ Route::post('/api/sync-all', [SyncController::class, 'syncAll'])->name('sync.all
 
 Route::post('/login', [App\Http\Controllers\Auth\LoginController::class, 'login'])->name('login');
 
-Route::prefix('nexora-ai')->name('ai.')->group(function () {
+// FIX: throttled because these routes have no auth gate (LoginController
+// currently performs no credential check — see note in this repo's
+// AI-review thread) and are CSRF-exempt for fetch()/curl use. Without a
+// rate limit, any anonymous caller could spam /refresh or /chat and rack
+// up real AI provider costs. 20 requests/minute per IP is a starting
+// point — tighten if you have real usage numbers.
+Route::prefix('nexora-ai')->name('ai.')->middleware('throttle:20,1')->group(function () {
     Route::get('/current-report', [AIController::class, 'current'])->name('current');
     Route::post('/refresh', [AIController::class, 'refresh'])->name('refresh');
     Route::post('/chat', [AIChatController::class, 'respond'])->name('chat');

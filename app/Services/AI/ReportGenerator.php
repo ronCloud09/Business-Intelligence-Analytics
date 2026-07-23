@@ -6,6 +6,7 @@ use App\Models\AIGeneration;
 use App\Models\AIReport;
 use Illuminate\Support\Collection;
 
+
 /**
  * Read-side counterpart to AIManager. AIManager writes new report
  * generations; ReportGenerator is how the dashboard, Intelligence
@@ -14,7 +15,9 @@ use Illuminate\Support\Collection;
  */
 class ReportGenerator
 {
-    public function __construct(protected CacheService $cacheService) {}
+    public function __construct(protected CacheService $cacheService)
+    {
+    }
 
     /**
      * The current report, shaped for easy consumption:
@@ -31,7 +34,7 @@ class ReportGenerator
                 ->where('is_current', true)
                 ->first();
 
-            if (! $generation) {
+            if (!$generation) {
                 return null;
             }
 
