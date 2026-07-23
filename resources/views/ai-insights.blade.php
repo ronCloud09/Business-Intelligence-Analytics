@@ -12,8 +12,9 @@
                     <i data-lucide="calendar" class="control-icon-sm"></i>
                     {{ now()->format('M d') }} - {{ now()->addDays(7)->format('M d, Y') }}
                 </div>
-                <button class="control-btn" title="Refresh Data">
-                    <i data-lucide="refresh-cw" class="control-icon"></i>
+                <button id="refresh-ai-btn" class="control-btn" title="Refresh Data">
+                <i data-lucide="refresh-cw" class="control-icon"></i></button>
+                    
                 </button>
             </div>
         </div>
@@ -142,4 +143,32 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('script')
+<script>
+    const refreshBtn = document.getElementById('refresh-ai-btn');
+            refreshBtn.addEventListener('click', async function () {
+                const icon = refreshBtn.querySelector('svg, i');
+                icon.classList.add('spin');
+                refreshBtn.disabled = true;
+                try {
+                    const response = await fetch('/nexora-ai/refresh', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json'
+                        }
+                    });
+                    if (!response.ok) {
+                        throw new Error('Failed to generate AI report.');
+                    }
+                    location.reload();
+                } catch (err) {
+                    alert(err.message);
+                    icon.classList.remove('spin');
+                    refreshBtn.disabled = false;
+                }
+            });
+</script>
 @endsection

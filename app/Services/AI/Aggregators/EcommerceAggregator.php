@@ -4,7 +4,7 @@ namespace App\Services\AI\Aggregators;
 
 use App\Services\Departments\EcommerceService;
 
-class SalesAggregator
+class EcommerceAggregator
 {
     public function __construct(protected EcommerceService $ecommerceService)
     {

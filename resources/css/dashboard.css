@@ -15,7 +15,8 @@
     --white: #FFFFFF;
     --success: #16A34A;
     --warning: #D97706;
-    --danger: #DC2626;
+    --critical: #DC2626;
+    --danger: #af1c1c;
     --info: #0EA5E9;
 }
 
@@ -237,6 +238,10 @@
 [data-theme="dark"] #deptStats .kpi-icon-container,
 [data-theme="dark"] .dept-stat-icon { background-color: #D6ECFC !important; color: #1B6FC8 !important; }
 [data-theme="dark"] #opRisksTotal { background: #334155; color: #E2E8F0; }
+
+/*AI icons*/
+[data-theme="dark"] .bg-icon-num {background: #1A2332;color: #3B82F6 !important;}
+
 
 /* ============================================================
    GLOBAL RESET & BASE
@@ -1026,7 +1031,7 @@ tr:nth-child(even) td { background-color: var(--off-white); }
     padding: 1.25rem; display: flex; flex-direction: column; min-width: 0;
     box-shadow: 0 24px 60px rgba(15, 23, 42, 0.08);
     backdrop-filter: blur(12px);
-    position: relative; overflow: hidden;
+    position: relative; overflow: visible;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .insight-card:hover { transform: translateY(-2px); box-shadow: 0 28px 70px rgba(15, 23, 42, 0.12); }
@@ -1042,9 +1047,10 @@ tr:nth-child(even) td { background-color: var(--off-white); }
 .bg-icon-blue { background: var(--ice-blue); color: var(--corporate-blue); }
 .bg-icon-num { background: var(--ice-blue); color: var(--navy-mid); }
 .insight-text-wrapper { flex: 1; min-width: 0; }
-.insight-text-wrapper p { font-size: 11px; color: var(--deep-navy); line-height: 1.4; word-break: break-word; }
+.insight-text-wrapper p { font-size: 13px; color: var(--deep-navy); line-height: 1.4; word-break: break-word; }
 .insight-text-wrapper .sub-text { font-size: 10px; color: var(--slate-500); margin-top: 2px; }
 .mock-badge { font-size: 9px; font-weight: 600; padding: 2px 5px; border-radius: 4px; white-space: nowrap; margin-left: auto; align-self: flex-start; }
+.mb-high-impact, .mb-critical { background-color: #f3b8b8; color: var(--critical); }
 .mb-high-impact, .mb-high { background-color: #FEE2E2; color: var(--danger); }
 .mb-med-impact, .mb-medium { background-color: #FEF3C7; color: var(--warning); }
 .mb-low-impact, .mb-low { background-color: #DCFCE7; color: var(--success); }
@@ -1245,6 +1251,19 @@ tr:nth-child(even) td { background-color: var(--off-white); }
 .live-alert-metric { text-align: center; }
 .live-metric-val { display: block; font-size: 13px; font-weight: 700; color: var(--deep-navy); }
 .live-metric-label { font-size: 9px; color: var(--slate-500); }
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
 
 /* ============================================================
    RESPONSIVE

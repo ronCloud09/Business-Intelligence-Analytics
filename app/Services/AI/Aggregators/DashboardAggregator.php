@@ -12,14 +12,15 @@ namespace App\Services\AI\Aggregators;
 class DashboardAggregator
 {
     public function __construct(
-        protected FinanceAggregator $finance,
-        protected InventoryAggregator $inventory,
-        protected ManufacturingAggregator $manufacturing,
-        protected ProcurementAggregator $procurement,
-        protected ComplianceAggregator $compliance,
-        protected ItsmAggregator $itsm,
-        protected SalesAggregator $sales,
-    ) {}
+    protected FinanceAggregator $finance,
+    protected InventoryAggregator $inventory,
+    protected ManufacturingAggregator $manufacturing,
+    protected ProcurementAggregator $procurement,
+    protected ComplianceAggregator $compliance,
+    protected ItsmAggregator $itsm,
+    protected EcommerceAggregator $ecommerce,
+) {}
+
 
     /**
      * @return array<string, array<string, mixed>>
@@ -33,7 +34,7 @@ class DashboardAggregator
             'procurement' => $this->procurement->summarize(),
             'compliance' => $this->compliance->summarize(),
             'itsm' => $this->itsm->summarize(),
-            'sales' => $this->sales->summarize(),
+            'ecommerce' => $this->ecommerce->summarize(),
         ];
     }
 
@@ -52,7 +53,7 @@ class DashboardAggregator
             'procurement' => $this->procurement->summarize(),
             'compliance' => $this->compliance->summarize(),
             'itsm' => $this->itsm->summarize(),
-            'sales' => $this->sales->summarize(),
+            'ecommerce' => $this->ecommerce->summarize(),
             default => throw new \InvalidArgumentException("Unknown department [{$department}]"),
         };
     }
